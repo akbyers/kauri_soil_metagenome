@@ -1,0 +1,320 @@
+---
+title: "MGR_analysis"
+output: html_document
+date: "2024-12-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+setwd("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential")
+library(ggplot2)
+library(reshape2)
+library(ggstatsplot)
+library(dplyr)
+library(Rmisc)
+library(geomtextpath)
+library(RColorBrewer)
+library(multcompView)
+library(rcompanion)
+library(ggpubr)
+library(car)
+library(lme4)
+```
+```{r read in data}
+microbial_growth_potential <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/growth_potential.csv")
+#microbial_growth_potential <- na.omit(microbial_growth_potential)#remove NA values
+```
+#set order to reflect disturbance gradient
+```{r}
+microbial_growth_potential$Forest <- factor(microbial_growth_potential$Forest, levels = c("Hirakimata", "Puketi",  "Glenfern", "Windy_Hill",  "Laingholm",  "Silverdale", "Gadgil", "Oratia", "Kaiaraara"))
+levels(microbial_growth_potential$Forest)[4] <- "Windy Hill"
+```
+##Prior to analysis, microbial alpha diversity and total soil C, soil N, and C:N ratio was added to the growth rate data
+```{r differences in soil abiotic properties, warning=FALSE}
+#total soil C
+kruskal.test(microbial_growth_potential$TC, microbial_growth_potential$Forest)
+wilcox.test(TC ~ Location, data = microbial_growth_potential)
+TC_wilcox <- pairwise.wilcox.test(microbial_growth_potential$TC, microbial_growth_potential$Forest, p.adjust.method = "holm")
+#generate compact letter display
+TC_wilcox.Matrix = fullPTable(TC_wilcox$p.value) 
+multcompLetters(TC_wilcox.Matrix)
+
+#total soil N
+kruskal.test(microbial_growth_potential$TN, microbial_growth_potential$Forest)
+wilcox.test(TN ~ Location, data = microbial_growth_potential)
+TN_wilcox <- pairwise.wilcox.test(microbial_growth_potential$TN, microbial_growth_potential$Forest, p.adjust.method = "holm")
+#generate compact letter display
+TN_wilcox.Matrix = fullPTable(TN_wilcox$p.value) 
+multcompLetters(TN_wilcox.Matrix)
+
+#C:N ratio
+kruskal.test(microbial_growth_potential$CN, microbial_growth_potential$Forest)
+wilcox.test(CN ~ Location, data = microbial_growth_potential)
+CN_wilcox <- pairwise.wilcox.test(microbial_growth_potential$CN, microbial_growth_potential$Forest, p.adjust.method = "holm")
+#generate compact letter display
+CN_wilcox.Matrix = fullPTable(CN_wilcox$p.value) 
+multcompLetters(CN_wilcox.Matrix)
+```
+```{r handling missing data for olsen P and soil pH, warning=FALSE}
+#microbial_growth_potential2 <- na.omit(microbial_growth_potential)
+
+#Olsen P
+kruskal.test(microbial_growth_potential2$OP, microbial_growth_potential2$Forest)
+OP_wilcox <- pairwise.wilcox.test(microbial_growth_potential2$OP, microbial_growth_potential2$Forest, p.adjust.method = "holm")
+#generate compact letter display
+OP_wilcox.Matrix = fullPTable(OP_wilcox$p.value) 
+multcompLetters(OP_wilcox.Matrix)
+
+#Soil pH
+kruskal.test(microbial_growth_potential2$pH, microbial_growth_potential2$Forest)
+pH_wilcox <- pairwise.wilcox.test(microbial_growth_potential2$pH, microbial_growth_potential2$Forest, p.adjust.method = "holm")
+#generate compact letter display
+pH_wilcox.Matrix = fullPTable(pH_wilcox$p.value) 
+multcompLetters(pH_wilcox.Matrix)
+```
+```{r test for differences between forests}
+#maximum growth rate
+kruskal.test(microbial_growth_potential$d_reciprocal, microbial_growth_potential$Forest)
+wilcox.test(d_reciprocal ~ Location, data = microbial_growth_potential)
+MGR_wilcox <- pairwise.wilcox.test(microbial_growth_potential$d_reciprocal, microbial_growth_potential$Forest, p.adjust.method = "holm")
+#generate compact letter display
+MGR_wilcox.Matrix = fullPTable(MGR_wilcox$p.value) 
+multcompLetters(MGR_wilcox.Matrix)
+
+#average genome size
+kruskal.test(microbial_growth_potential$AGS_Mbp, microbial_growth_potential$Forest)
+wilcox.test(AGS_Mbp ~ Location, data = microbial_growth_potential)
+AGS_wilcox <- pairwise.wilcox.test(microbial_growth_potential$AGS_Mbp, microbial_growth_potential$Forest, p.adjust.method = "holm")
+#generate compact letter display
+AGS_wilcox.Matrix = fullPTable(AGS_wilcox$p.value) 
+multcompLetters(AGS_wilcox.Matrix)
+```
+
+```{r edit forest order to reflect disturbance gradient}
+mycolors = c(brewer.pal(name="Set1", n = 4), brewer.pal(name="Dark2", n = 8))
+```
+##plot soil abiotic properties
+```{r testing out facet wrap, add cld results manually}
+soil_chemistry.melted <- melt(microbial_growth_potential[c(2, 9:11, 14:15)])
+levels(soil_chemistry.melted$variable) <- c("Total %C", "Total %N", "C/N ratio", "pH", "Olsen P")
+```
+```{r}
+soilchem_plot <- ggplot(data=soil_chemistry.melted, aes(y=Forest, x=value, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black", size = 8))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  facet_wrap(~variable, scales = "free", axis.labels = "margins")
+```
+```{r}
+soilchem_plot <- ggplot(data = soil_chemistry.melted, aes(y = Forest, x = value, group = Forest, color = Forest)) +
+  geom_violin(aes(fill = Forest), color = "black", scale = "width") +
+  stat_boxplot(geom = "errorbar", width = 0.5, color = "black") +
+  stat_summary(fun = mean, geom = "point", shape = 21, size = 3, color = "black", fill = "black") +
+  facet_grid(Forest ~ variable, scales = "free", switch = "y") +
+  theme_bw(base_size = 15) +
+  theme(strip.placement = "outside",
+    strip.text.y.left = element_text(angle = 0),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.spacing.y = unit(0, "lines"),
+    legend.position = "bottom") +
+  ylab("") +
+  xlab("") +
+  scale_fill_brewer(palette = "YlOrRd") +
+  scale_color_brewer(palette = "YlOrRd")
+```
+
+```{r plot total C}
+TC_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=TC, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Soil C (%)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black", size = 8))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(0, 52))+
+  annotate("text", x = 52, y=9, label= "a", size=4)+
+  annotate("text", x = 52, y=8, label= "a", size=4)+
+  annotate("text", x = 52, y=7, label= "b", size=4)+
+  annotate("text", x = 52, y=6, label= "cd", size=4)+
+  annotate("text", x = 52, y=5, label= "cd", size=4)+
+  annotate("text", x = 52, y=4, label= "a", size=4)+
+  annotate("text", x = 52, y=3, label= "c", size=4)+
+  annotate("text", x = 52, y=2, label= "bd", size=4)+
+  annotate("text", x = 52, y=1, label= "e", size=4)
+TC_plot <- TC_plot + scale_y_discrete(limits=rev)
+```
+```{r plot total N}
+TN_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=TN, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Soil N (%)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black", size = 8))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(0, 1.5))+
+  annotate("text", x = 1.5, y=9, label= "a", size=4)+
+  annotate("text", x = 1.5, y=8, label= "a", size=4)+
+  annotate("text", x = 1.5, y=7, label= "bc", size=4)+
+  annotate("text", x = 1.5, y=6, label= "bc", size=4)+
+  annotate("text", x = 1.5, y=5, label= "b", size=4)+
+  annotate("text", x = 1.5, y=4, label= "ad", size=4)+
+  annotate("text", x = 1.5, y=3, label= "bc", size=4)+
+  annotate("text", x = 1.5, y=2, label= "cd", size=4)+
+  annotate("text", x = 1.5, y=1, label= "e", size=4)
+TN_plot <- TN_plot + scale_y_discrete(limits=rev)
+```
+```{r plot C:N}
+CN_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=CN, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Soil C:N ratio")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black", size = 8))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(20, 50))+
+  annotate("text", x = 50, y=9, label= "ab", size=4)+
+  annotate("text", x = 50, y=8, label= "a", size=4)+
+  annotate("text", x = 50, y=7, label= "a", size=4)+
+  annotate("text", x = 50, y=6, label= "c", size=4)+
+  annotate("text", x = 50, y=5, label= "c", size=4)+
+  annotate("text", x = 50, y=4, label= "a", size=4)+
+  annotate("text", x = 50, y=3, label= "cd", size=4)+
+  annotate("text", x = 50, y=2, label= "bc", size=4)+
+  annotate("text", x = 50, y=1, label= "d", size=4)
+CN_plot <- CN_plot + scale_y_discrete(limits=rev)
+```
+```{r}
+pH_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=pH, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width", na.rm = TRUE)+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black", na.rm = TRUE)+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black", na.rm = TRUE) +
+  theme_bw(base_size = 15)+
+  xlab("Soil pH")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black", size = 8))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(3.7, 6.2))+
+  annotate("text", x = 6.2, y=9, label= "a", size=4)+
+  annotate("text", x = 6.2, y=7, label= "b", size=4)+
+  annotate("text", x = 6.2, y=6, label= "c", size=4)+
+  annotate("text", x = 6.2, y=3, label= "c", size=4)+
+  annotate("text", x = 6.2, y=1, label= "d", size=4)
+pH_plot2 <- pH_plot + scale_y_discrete(limits=rev)
+```
+```{r}
+OP_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=OP, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width", na.rm = TRUE)+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black", na.rm = TRUE)+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black", na.rm = TRUE) +
+  theme_bw(base_size = 15)+
+  xlab("Olsen P (mg/l)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black", size = 8))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(1, 6.2))+
+  annotate("text", x = 6.2, y=9, label= "a", size=4)+
+  annotate("text", x = 6.2, y=7, label= "b", size=4)+
+  annotate("text", x = 6.2, y=6, label= "b", size=4)+
+  annotate("text", x = 6.2, y=3, label= "ab", size=4)+
+  annotate("text", x = 6.2, y=1, label= "c", size=4)
+OP_plot2 <- OP_plot + scale_y_discrete(limits=rev)
+```
+#plot microbial growth data
+```{r plot maximum growth potential}
+MGP_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=d_reciprocal, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab(bquote(Max.~Growth~Rate~(h^-1)))+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black", size = 8))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(0.149, 0.23))+
+  annotate("text", x = 0.23, y=9, label= "ab", size=4)+
+  annotate("text", x = 0.23, y=8, label= "ab", size=4)+
+  annotate("text", x = 0.23, y=7, label= "a", size=4)+
+  annotate("text", x = 0.23, y=6, label= "a", size=4)+
+  annotate("text", x = 0.23, y=5, label= "ab", size=4)+
+  annotate("text", x = 0.23, y=4, label= "b", size=4)+
+  annotate("text", x = 0.23, y=3, label= "a", size=4)+
+  annotate("text", x = 0.23, y=2, label= "ab", size=4)+
+  annotate("text", x = 0.23, y=1, label= "c", size=4)
+MGP_plot <- MGP_plot + scale_y_discrete(limits=rev)
+```
+```{r plot maximum growth potential}
+AGS_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=AGS_Mbp, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Av. Genome Size (Mbp)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black", size = 8))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(1.7, 2.7))+
+  annotate("text", x = 2.7, y=9, label= "ab", size=4)+
+  annotate("text", x = 2.7, y=8, label= "a", size=4)+
+  annotate("text", x = 2.7, y=7, label= "c", size=4)+
+  annotate("text", x = 2.7, y=6, label= "cd", size=4)+
+  annotate("text", x = 2.7, y=5, label= "cd", size=4)+
+  annotate("text", x = 2.7, y=4, label= "b", size=4)+
+  annotate("text", x = 2.7, y=3, label= "cd", size=4)+
+  annotate("text", x = 2.7, y=2, label= "d", size=4)+
+  annotate("text", x = 2.7, y=1, label= "ab", size=4)
+AGS_plot <- AGS_plot + scale_y_discrete(limits=rev)
+```
+##adding KW test results
+```{r}
+MGP_plot <- MGP_plot + labs(caption="KW Chi-sq=46.91, p<0.001") + theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+AGS_plot <- AGS_plot + labs(caption="KW Chi-sq=69.54, p<0.001") + theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+TC_plot <- TC_plot + labs(caption="KW Chi-sq=74.74, p<0.001") + theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+TN_plot <- TN_plot + labs(caption="KW Chi-sq=70.98, p<0.001") + theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+CN_plot <- CN_plot + labs(caption="KW Chi-sq=67.87, p<0.001") + theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+pH_plot2 <- pH_plot2 + labs(caption="KW Chi-sq=42.02, p<0.001") + theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+OP_plot2 <- OP_plot2 + labs(caption="KW Chi-sq=29.63, p<0.001") + theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+```
+```{r}
+Figure_SoilChem <- ggarrange(pH_plot2, OP_plot2, TC_plot, TN_plot, CN_plot, common.legend = TRUE, legend = "none", widths = c(-1, -1, -1, -1, -1), labels = c("A)", "B) ", "C)", "D)", "E)"), align = "hv", font.label = list(size=12))
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/SoilChem.png', width = 6500, height = 4000, res = 500)
+Figure_SoilChem
+```
+```{r}
+Figure_Growth <- ggarrange(AGS_plot, MGP_plot, common.legend = TRUE, legend = "none", labels = c("A)", "B) "), align = "hv", font.label = list(size=12))
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Figure_Growth.png', width = 4500, height = 2500, res = 500)
+Figure_Growth
+```
+
+
+
+
+
+

@@ -1,0 +1,99 @@
+---
+title: "eggNOG"
+output: html_document
+date: "2025-01-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r}
+library(dplyr)
+library(phyloseq)
+```
+```{r import gene coverage file}
+contig_coverage <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Gene coverage/normalised_coverage_METABOLIC.csv") 
+rownames(contig_coverage) <- contig_coverage$contigName 
+contig_coverage <- contig_coverage[-c(1:2)]
+
+#edit colnames to reflect sample file ID
+names(contig_coverage) = gsub(pattern = ".bam", replacement = "", x = names(contig_coverage))
+```
+#eggNOG annotation dataset
+```{r}
+contig_functions_eggNOG <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/eggNOG/eggNOG.csv")
+
+#clean up dataframe
+colnames(contig_functions_eggNOG)
+contig_functions_eggNOG_edit <- contig_functions_eggNOG[-c(3:6, 11, 14:22)] #remove unwanted columns
+colnames(contig_functions_eggNOG_edit) <- c("Contig_ID", "seed_ortholog", "Category", "COG_category",   "Description",    "Preferred_name", "EC", "KEGG_ko") #rename columns
+
+#reorder columns 
+contig_functions_eggNOG_edit <- contig_functions_eggNOG_edit[, c("Contig_ID", "Category", "COG_category",  "seed_ortholog",  "Description", "Preferred_name", "EC", "KEGG_ko")] 
+rownames(contig_functions_eggNOG_edit) <- contig_functions_eggNOG_edit$Contig_ID
+contig_functions_eggNOG_edit$KEGG_ko <- gsub("ko:", "", contig_functions_eggNOG_edit$KEGG_ko)
+contig_functions_eggNOG_edit$KEGG_ko <- gsub(",.*", "",  contig_functions_eggNOG_edit$KEGG_ko)
+contig_functions_eggNOG_edit$KEGG_ko <- gsub("-", "",  contig_functions_eggNOG_edit$KEGG_ko)
+contig_functions_eggNOG_edit$COG_category <- gsub("-", "S",  contig_functions_eggNOG_edit$COG_category)
+head(contig_functions_eggNOG_edit)
+contig_functions_eggNOG_edit$Category <- as.factor(contig_functions_eggNOG_edit$Category)
+```
+#Build ps object for looking at gene categories
+```{r filter contigs with eggNOG annotations}
+contigs_keep_eggNOG <- rownames(contig_functions_eggNOG_edit)
+contig_coverage_eggNOG <- contig_coverage[rownames(contig_coverage) %in% contigs_keep_eggNOG ,]
+write.csv(contig_coverage_eggNOG, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Gene coverage/gene_coverage_eggNOG.csv")
+```
+#calculate number of contigs assigned a known function
+```{r}
+#remove function unknown
+contig_functions_eggNOG_edit2 <- subset(contig_functions_eggNOG_edit, Category !="Function unknown")
+contigs_keep_eggNOG2 <- rownames(contig_functions_eggNOG_edit2)
+contig_coverage_eggNOG2 <- contig_coverage[rownames(contig_coverage) %in% contigs_keep_eggNOG2 ,]
+```
+```{r}
+total_contigs <- as.data.frame(colSums(contig_coverage != 0))
+contig_coverage_eggNOG2 <- as.data.frame(colSums(contig_coverage_eggNOG2 != 0))
+contigs_annotated <- cbind(total_contigs, contig_coverage_eggNOG2)
+#write.csv(contigs_annotated, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/contigs_known_eggNOG.csv")
+```
+#Count number of contigs for each function
+```{r}
+contig_functions_eggNOG_edit2 <- contig_functions_eggNOG_edit[order(row.names(contig_functions_eggNOG_edit)), ]
+contig_coverage_eggNOG2 <- contig_coverage_eggNOG[order(row.names(contig_coverage_eggNOG)), ]
+contigs_annotated_DF <- merge(contig_functions_eggNOG_edit[,1:2], contig_coverage_eggNOG, 
+                          by = 'row.names', all = TRUE) 
+```
+```{r}
+contigs_annotated_DF.m <- melt(contigs_annotated_DF)
+# Now we can group by sample and count total number of COG categories in each
+contigs_annotated_DF.m2 <- contigs_annotated_DF.m %>%
+  filter(value > 0) %>%
+  group_by(Category, variable) %>%
+  dplyr::summarize(nFeatures = n()) 
+```
+```{r convert to wide format}
+library(data.table)
+contigs_annotated_DF.w <- dcast(contigs_annotated_DF.m2, variable ~ Category, value.var = "nFeatures")
+contigs_annotated_DF.w <- cbind(total_contigs, contigs_annotated_DF.w)
+write.csv(contigs_annotated_DF.w, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/contigs_annotated_DF.m2.csv")
+```
+```{r convert to ps format}
+eggNOG_gene_coverage = otu_table(contig_coverage_eggNOG, taxa_are_rows = TRUE)
+eggNOG_genes = tax_table(as.matrix(contig_functions_eggNOG_edit[,-1]))
+
+eggNOG_sample_dat <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/sample_metadata.csv")
+rownames(eggNOG_sample_dat) <- eggNOG_sample_dat$Sample_ID
+eggNOG_sample_dat = sample_data(eggNOG_sample_dat)
+
+eggNOG_physeq = phyloseq(eggNOG_gene_coverage, eggNOG_genes, eggNOG_sample_dat)
+saveRDS(eggNOG_physeq, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/eggNOG_ps.rds")#export phyloseq files
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

@@ -1,0 +1,29 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      metabolic
+#SBATCH --time          3-00:00:00
+#SBATCH --mem           40GB
+#SBATCH --cpus-per-task 20
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+#SBATCH --mail-user     alexa.byers@lincoln.ac.nz
+#SBATCH --mail-type     ALL
+
+#change directory
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/CO_ASSEMBLY/
+#mkdir METABOLIC
+#mkdir METABOLIC/output_files
+
+# Load modules
+module purge
+module load METABOLIC/4.0-Miniconda3
+
+#Running genome workflow on prodigal files, calculating gene coverage separately
+#Input genome is concatenated MAGs, contigs dereplicated using dedupe.sh
+
+#copy over input genome
+#cp deReplicated_FINAL_BINS/dedupe_contigs/DEDUPE_MAGs_edited.fasta METABOLIC/
+
+#Run METABOLIC
+METABOLIC-G.pl -t 40 -m-cutoff 0.75 -in-gn METABOLIC/ -kofam-db full -t 20 -o METABOLIC/output_files

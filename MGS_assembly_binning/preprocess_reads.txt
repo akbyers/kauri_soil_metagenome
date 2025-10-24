@@ -1,0 +1,25 @@
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/
+
+#unzip reads
+tar -xvf *.tar
+
+#unzip sequencing reads
+gunzip 01.RawData/*/*.fq.gz
+
+#move into new folder, make sure any concated reads aren't duplicated
+mkdir raw_reads
+cp /01.RawData/*/*.fq raw_reads/
+
+#concatenate reads from each forest
+mkdir concatenated_reads
+cat La*_1.fastq > concatenated_reads/Laingholm_CONCAT_1.fastq
+cat La*_2.fastq > concatenated_reads/Laingholm_CONCAT_2.fastq
+
+cat Ora*_1.fastq > concatenated_reads/Oratia_CONCAT_1.fastq
+cat Ora*_2.fastq > concatenated_reads/Oratia_CONCAT_2.fastq
+
+cat SD*_1.fastq > concatenated_reads/Silverdale_CONCAT_1.fastq
+cat SD*_2.fastq > concatenated_reads/Silverdale_CONCAT_2.fastq
+
+cat Puk*_1.fastq > concatenated_reads/Puketi_CONCAT_1.fastq
+cat Puk*_2.fastq > concatenated_reads/Puketi_CONCAT_2.fastq

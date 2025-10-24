@@ -1,0 +1,21 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      GTDB_Tk
+#SBATCH --time          05:00:00
+#SBATCH --mem           150GB
+#SBATCH --cpus-per-task 12
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+
+
+#Run GTDB-Tk to identify bins
+
+# Load modules
+module purge
+module load GTDB-Tk/2.4.0-foss-2023a-Python-3.11.6
+
+#Set directory
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/CO_ASSEMBLY
+
+gtdbtk classify_wf -x fa --cpus 12 --keep_intermediates --genome_dir deReplicated_FINAL_BINS/deRep_output/dereplicated_genomes --out_dir GTDB_tk/ --skip_ani_screen

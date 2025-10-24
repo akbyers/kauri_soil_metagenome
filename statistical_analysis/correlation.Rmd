@@ -1,0 +1,314 @@
+---
+title: "Correlation analysis"
+output: html_document
+date: "2025-02-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r read in data}
+cor_dat <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Correlation analysis/correlation_input.csv")
+rownames(cor_dat) <- cor_dat$Sample_ID
+cor_dat <- cor_dat[,-1]
+cor_dat <- na.omit(cor_dat)
+#setting factor variables
+cor_dat$Forest <- as.factor(cor_dat$Forest)
+cor_dat$Location <- as.factor(cor_dat$Location)
+```
+#REFINE DATASET VARIABLES
+```{r}
+colnames(cor_dat)
+#remove unwanted categories
+keep_variables <- c("Forest", "TC", "TN", "C.N", "d_reciprocal", "AGS_Mbp", "Observed_METABOLIC",  "Shannon_METABOLIC", "Observed_CAZy", "Shannon_CAZy", "Observed_BACTERIA", "Shannon_BACTERIA", "Observed_eggNOG", "Shannon_eggNOG", "Carbon.metabolism", "Nitrogen.cycling", "Carbon.degradation", "Nitrification", "Nitrate.reduction", "Calvin.cycle", "Pyruvate.metabolism", "Photosynthesis", "DC.4HB", "PP.pathway", "rTCA", "Urea.utilization", "X3HP.4HB.cycle", "Methane.metabolism..other", "Cellulose.degradation", "Starch.degradation", "Hemicellulose.degradation", "Galactose.degradation", "D.galacturonate.degradation", "Oxidative.phosphorylation", "Methanogenesis", "Chitin.degradation", "Nitrile.hydration", "Glycolysis...Gluconeogenesis",   "Glyoxylate.cycle", "Pectin.degradation", "Denitrification", "WL.pathway", "D.galactonate.degradation", "Nitrate.assimilation", "Glycoside.Hydrolase", "Carbohydrate.Binding.Module", "GlycosylTransferase", "Auxiliary.Activities", "Polysaccharide.Lyase", "Carbohydrate.Esterase")
+
+cor_dat2 <- cor_dat[,names(cor_dat) %in% keep_variables]
+```
+
+##CORRELATION PLOT
+##Correlating all variables
+```{r}
+# Install
+#if(!require(devtools)) install.packages("devtools")
+#devtools::install_github("kassambara/ggcorrplot")
+library(Hmisc)
+library(corrplot)
+library(RColorBrewer)
+library(ggcorrplot)
+```
+```{r}
+correlation_DF <- as.matrix(cor_dat2[,-1])
+correlation_DF <- na.omit(correlation_DF)
+```
+```{r}
+#edit colnames
+colnames(correlation_DF) <- c("Soil %C", "Soil %N", "Soil C/N ratio", "Max. growth rate", "Av. genome size", "Observed: Metabolic", "Shannon: Metabolic", "Observed: CAZy", "Shannon: CAZy", "Observed: Bacteria", "Shannon: Bacteria", "Observed: eggNOG OGs", "Shannon: eggNOG OGs", "C met.", "N cycling", "C deg.", "Nitrification", "Nitrate reduction", "Calvin cycle", "Pyruvate met.", "Photosynthesis", "DC/4HB pathway", "PP pathway", "rTCA", "Urea utilization", "3HP/4HB cycle", "Methane met.", "Cellulose deg.", "Starch deg.", "Hemicellulose deg.", "Galactose deg.", "D galacturonate deg.", "OXPHOS", "Methanogenesis", "Chitin deg.", "Nitrile hydration", "Glycolysis/GNG", "Glyoxylate cycle", "Pectin deg.", "Denitrification", "WL pathway", "D galactonate deg.", "Nitrate assimilation", "GHs [CAZy]", "CBMs [CAZy]", "GTs [CAZy]", "AAs [CAZy]", "PLs [CAZy]", "CEs [CAZy]")
+
+#correlation matrix
+corr_res <- cor(correlation_DF, method = "spearman")
+corr_res.p <- cor_pmat(correlation_DF)
+```
+```{r flatten cor matrix function}
+# ++++++++++++++++++++++++++++
+# flattenCorrMatrix
+# ++++++++++++++++++++++++++++
+# cormat : matrix of the correlation coefficients
+# pmat : matrix of the correlation p-values
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+```
+```{r flatten correlation matrix}
+correlations_DF <- flattenCorrMatrix(corr_res, corr_res.p)
+write.csv(correlations_DF, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/correlations_DF.csv")
+```
+#plot correlation - this is for supplementary
+```{r}
+correlation_plot <- ggcorrplot(corr_res, method = "square", type = "upper", 
+                               hc.order = TRUE, hc.method = "ward.D", 
+                               p.mat = corr_res.p, sig.level = 0.05, insig = "blank", 
+                               ggtheme = theme_bw(base_size = 15), lab_col = "black", lab_size = 3,
+                               legend.title = "Spearman rho", outline.color = "black", tl.cex=16,
+                               colors = c("darkblue", "white", "darkred"), lab = FALSE, digits = 1, tl.col = "black")+ theme(element_text(colour = "black"), axis.text = element_text(colour = "black"))
+png("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Corrplot.png", width = 7000, height = 5000, res = 350)
+correlation_plot
+```
+##focusing on relationships of interest
+```{r}
+#keeping just C and N genes
+keep_variables2 <- c("Forest", "TC", "TN", "C.N", "d_reciprocal", "AGS_Mbp", "Observed_METABOLIC",  "Shannon_METABOLIC", "Observed_CAZy", "Shannon_CAZy", "Observed_BACTERIA", "Shannon_BACTERIA", "Observed_eggNOG", "Shannon_eggNOG", "Carbon.metabolism", "Nitrogen.cycling", "Carbon.degradation")
+
+cor_dat3 <- cor_dat[,names(cor_dat) %in% keep_variables2]
+correlation_DF2 <- as.matrix(cor_dat3[,-1])
+correlation_DF2 <- na.omit(correlation_DF2)
+```
+```{r edit names}
+colnames(correlation_DF2) <- c("Soil %C", "Soil %N", "Soil C/N ratio", "Maximum growth rate", "Average genome size", "Observed: Metabolic", "Shannon: Metabolic", "Observed: CAZy", "Shannon: CAZy", "Observed: Bacteria", "Shannon: Bacteria", "Observed: eggNOG", "Shannon: eggNOG", "C metabolism genes", "N cycling genes", "C degrading genes")
+```
+```{r}
+#correlation matrix
+corr_res2 <- cor(correlation_DF2, method = "spearman")
+corr_res2.p <- cor_pmat(correlation_DF2)
+```
+#plot correlation - this is for supplementary
+```{r}
+correlation_plot2 <- ggcorrplot(corr_res2, method = "square", type = "upper", hc.order = TRUE, hc.method = "ward.D",  
+                               p.mat = corr_res2.p,  sig.level = 0.05, insig = "blank", lab_size=4, show.diag = TRUE,
+                               ggtheme = theme_bw(base_size = 15), lab_col = "black", 
+                               legend.title = "Spearman rho", outline.color = "black", tl.cex=12,
+                               colors = c("darkblue", "white", "darkred"), lab = TRUE, digits = 1, tl.col = "black")+
+  theme(element_text(colour = "black"), axis.text = element_text(colour = "black"))
+png("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Corrplot2.png", width = 4500, height = 3500, res = 500)
+correlation_plot2
+```
+##closer look at relationship between specific soil properties
+```{r}
+properties_of_interest <- c("Forest", "TC", "TN", "C.N", "d_reciprocal", "AGS_Mbp", "Observed_METABOLIC",  "Shannon_METABOLIC", "Observed_CAZy", "Shannon_CAZy", "Observed_BACTERIA", "Shannon_BACTERIA", "Carbon.metabolism", "Nitrogen.cycling", "Carbon.degradation")
+cor_dat_filtered <- cor_dat[,names(cor_dat) %in% properties_of_interest]
+```
+#reorder forest to reflect disturbance gradient
+```{r}
+cor_dat_filtered$Forest <- factor(cor_dat_filtered$Forest, levels = c("Hirakimata", "Puketi", "Glenfern", "Windy Hill", "Laingholm", "Silverdale", "Gadgil",  "Oratia", "Kaiaraara"))
+```
+```{r make correlation plots}
+TC_MGR <- ggplot(data = cor_dat_filtered, mapping = aes(x = TC, y = d_reciprocal, color = Forest)) +
+  geom_point(size = 5)+
+  geom_point(size = 5, shape = 21, color = "black", stroke = 1) +
+  theme_bw(base_size=15)+
+  geom_smooth(method = "lm", se = TRUE, color = "black")+
+  xlab("Soil C (%)")+
+  ylab(bquote(Max.~Growth~Rate~(h^-1)))+
+  scale_color_brewer(palette = "YlOrRd")
+
+TC_AGS <- ggplot(data = cor_dat_filtered, mapping = aes(x = TC, y = AGS_Mbp, color = Forest)) +
+  geom_point(size = 5)+
+  geom_point(size = 5, shape = 21, color = "black", stroke = 1) +
+  theme_bw(base_size=15)+
+  geom_smooth(method = "lm", se = TRUE, color = "black")+
+  xlab("Soil C (%)")+
+  ylab("Average Genome Size (Mbp)")+
+  scale_color_brewer(palette = "YlOrRd")
+
+TC_C_MET <- ggplot(data = cor_dat_filtered, mapping = aes(x = TC, y = Carbon.metabolism, color = Forest)) +
+  geom_point(size = 5)+
+  geom_point(size = 5, shape = 21, color = "black", stroke = 1) +
+  theme_bw(base_size=15)+
+  geom_smooth(method = "lm", se = TRUE, color = "black")+
+  xlab("Soil C (%)")+
+  ylab("C metabolism gene abundance")+
+  scale_color_brewer(palette = "YlOrRd")
+
+TC_C_DEG <- ggplot(data = cor_dat_filtered, mapping = aes(x = TC, y = Carbon.degradation, color = Forest)) +
+  geom_point(size = 5)+
+  geom_point(size = 5, shape = 21, color = "black", stroke = 1) +
+  theme_bw(base_size=15)+
+  geom_smooth(method = "lm", se = TRUE, color = "black")+
+  xlab("Soil C (%)")+
+  ylab("C degradation gene abundance")+
+  scale_color_brewer(palette = "YlOrRd")
+
+TC_N_CYC <- ggplot(data = cor_dat_filtered, mapping = aes(x = TC, y = Nitrogen.cycling, color = Forest)) +
+  geom_point(size = 5)+
+  geom_point(size = 5, shape = 21, color = "black", stroke = 1) +
+  theme_bw(base_size=15)+
+  geom_smooth(method = "lm", se = TRUE, color = "black")+
+  xlab("Soil C (%)")+
+  ylab("N cycling gene abundance")+
+  scale_color_brewer(palette = "YlOrRd")
+
+TC_Shannon <- ggplot(data = cor_dat_filtered, mapping = aes(x = TC, y = Shannon_BACTERIA, color = Forest)) +
+  geom_point(size = 5)+
+  geom_point(size = 5, shape = 21, color = "black", stroke = 1) +
+  theme_bw(base_size=15)+
+  geom_smooth(method = "lm", se = TRUE, color = "black")+
+  xlab("Soil C (%)")+
+  ylab("Shannon: Bacterial genera")+
+  scale_color_brewer(palette = "YlOrRd")
+
+TC_Observed <- ggplot(data = cor_dat_filtered, mapping = aes(x = TC, y = Observed_BACTERIA, color = Forest)) +
+  geom_point(size = 5)+
+  geom_point(size = 5, shape = 21, color = "black", stroke = 1) +
+  theme_bw(base_size=15)+
+  geom_smooth(method = "lm", se = TRUE, color = "black")+
+  xlab("Soil C (%)")+
+  ylab("Observed: Bacterial genera")+
+  scale_color_brewer(palette = "YlOrRd")
+
+TC_Shannon_METABOLIC <- ggplot(data = cor_dat_filtered, mapping = aes(x = TC, y = Shannon_METABOLIC, color = Forest)) +
+  geom_point(size = 5)+
+  geom_point(size = 5, shape = 21, color = "black", stroke = 1) +
+  theme_bw(base_size=15)+
+  geom_smooth(method = "lm", se = TRUE, color = "black")+
+  xlab("Soil C (%)")+
+  ylab("Observed: Metabolic genes")+
+  scale_color_brewer(palette = "YlOrRd")
+```
+
+##random forest regression, fitting forest as ordinal variable based on disturbance intensity
+##see if we can tie together how disturbance influences chemical and microbial properties
+```{r}
+library(randomForest)
+library(ggplot2)
+```
+```{r}
+regression_input <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Correlation analysis/RF regression/correlation_input.csv")
+regression_input <- na.omit(regression_input)
+regression_input$Disturbance <- ordered(regression_input$Disturbance, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9"))
+```
+```{r Split the dataset into training and testing sets}
+set.seed(123) # Set a seed for reproducibility
+train_indices <- sample(1:nrow(regression_input), 0.7 * nrow(regression_input)) # 70% of the data for training
+train_data <- regression_input[train_indices, ]
+test_data <- regression_input[-train_indices, ]
+```
+
+```{r tune RF model}
+mtry <- tuneRF(train_data[,4:32], train_data$Disturbance, ntreeTry=1000, stepFactor=1.5,improve=0.01, trace=TRUE, plot=TRUE)
+best.m <- mtry[mtry[, 2] == min(mtry[, 2]), 1]
+```
+
+```{r}
+set.seed(71)
+rf.fit <- randomForest(Disturbance ~ ., data=train_data[,3:32], mtry=best.m, ntree=1000, keep.forest=FALSE, importance=TRUE)
+```
+```{r Predict on the test set}
+predictions <- predict(rf.fit, test_data[,3:32], type = "response")
+```
+
+```{r}
+ggplot(ImpData, aes(x=Var.Names, y=`%IncMSE`)) +
+  geom_segment( aes(x=Var.Names, xend=Var.Names, y=0, yend=`%IncMSE`), color="skyblue") +
+  geom_point(aes(size = IncNodePurity), color="blue", alpha=0.6) +
+  theme_light() +
+  coord_flip() +
+  theme(
+    legend.position="bottom",
+    panel.grid.major.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank())
+```
+#Ordinal Logistic Regression: assess the association between predictors and an ordinal outcome
+#You can fit an ordinal logistic regression model in R with MASS::polr() (proportional odds logistic regression)
+```{r}
+require(foreign)
+require(ggplot2)
+require(MASS)
+require(Hmisc)
+require(reshape2)
+```
+```{r}
+regression_input <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Correlation analysis/RF regression/correlation_input.csv")
+regression_input <- na.omit(regression_input)
+```
+```{r}
+#set disturbance as ordinal variable
+regression_input$Disturbance <- ordered(regression_input$Disturbance, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9"))
+levels(regression_input$Disturbance)
+```
+```{r filter variables of interest}
+regression_input2 <- regression_input[c(3:28, 86:91)]
+#rescale variables
+regression_input_scaled <- as.data.frame(lapply(regression_input2[,2:32], function(x) scale(x, center = TRUE)))
+regression_input_scaled <- cbind(regression_input2$Disturbance, regression_input_scaled)
+colnames(regression_input_scaled)[1] <- "Disturbance"
+```
+```{r}
+varnames <- names(regression_input_scaled)[2:32]
+boxplots <- lapply(varnames, function(var) {
+  boxplot(as.formula(paste(var, "~ Disturbance")),
+    data = regression_input_scaled,
+    main = var)})
+```
+
+```{r}
+fit.olr <- polr(Disturbance ~ TC + TN + C.N + d_reciprocal + AGS_Mbp + Observed_METABOLIC + Shannon_METABOLIC + Observed_CAZy + Shannon_CAZy +
+                Observed_BACTERIA + Shannon_BACTERIA + Observed_eggNOG + Shannon_eggNOG + Arsenate.cycling + Selenate.reduction + Chlorite.reduction +
+                Aromatics.degradation + Carbon.metabolism + Amino.acid.metabolism + C1.metabolism + Fatty.acid.degradation + Nitrogen.cycling +
+                Sulfur.metabolism + Carbon.degradation + Fermentation + Glycoside.Hydrolase + Carbohydrate.Binding.Module + GlycosylTransferase +
+                Auxiliary.Activities + Polysaccharide.Lyase + Carbohydrate.Esterase, data = regression_input_scaled)
+summary(fit.olr)## view a summary of the model
+```
+```{r}
+#install.packages("ordinalForest")
+library(ordinalForest)
+```
+```{r}
+regression_input <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Correlation analysis/RF regression/correlation_input.csv")
+regression_input <- na.omit(regression_input)
+```
+```{r}
+#set disturbance as ordinal variable
+regression_input$Disturbance <- ordered(regression_input$Disturbance, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9"))
+levels(regression_input$Disturbance)
+regression_input2 <- regression_input[c(3:28, 86:91)]
+```
+```{r}
+set.seed(123)  # for reproducibility
+orf_model <- ordfor(depvar = "Disturbance", regression_input2, nsets = 1000, ntreeperdiv = 100, ntreefinal = 5000, nbest = 10, naive = FALSE, npermtrial = 500, importance = TRUE )
+```
+```{r}
+orf_model$varimp
+orf_model$perffunction
+```
+
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

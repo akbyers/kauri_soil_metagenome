@@ -1,0 +1,1216 @@
+---
+title: "METABOLIC_analysis"
+author: "Alexa Byers"
+date: "2025-01-13"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Basic alpha and beta diversity analysis of biogeochemical cycling genes annotated using METABOLIC and DRAM
+## R Markdown
+```{r installing packages}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("phyloseq")
+devtools::install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+BiocManager::install("ANCOMBC")
+BiocManager::install("microbiome")
+devtools::install_github("cmartin/ggConvexHull")
+```
+```{r load libraries, message=FALSE, warning=FALSE}
+library(dplyr)
+library(phyloseq)
+library(ggplot2)
+library(reshape2)
+library(Rmisc)
+library(vegan)
+library(devtools)
+library(pairwiseAdonis)
+library(scales)
+library(ggpubr)
+library(ggordiplots)
+library(RColorBrewer)
+library(rcompanion)
+library(multcompView)
+library(ANCOMBC)
+library(tidyverse)
+library(DT)
+library(ggConvexHull)
+library(pheatmap)
+library(ggsankey)
+```
+```{r set colour scheme}
+mycolors = c(brewer.pal(name="Set1", n = 4), brewer.pal(name="Dark2", n = 8))
+```
+# Step 1 - Make phyloseq object for data processing, handling, and analysis
+```{r import data files}
+gene_coverage <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Gene coverage/gene_coverage_MET_DRAM_filtered.csv")
+functional_genes <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/METABOLIC_DRAM_combined.csv")
+sample_dat <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/sample_metadata.csv")
+
+rownames(gene_coverage) <- gene_coverage$X
+rownames(functional_genes) <- functional_genes$Contig
+rownames(sample_dat) <- sample_dat$Sample_ID
+```
+```{r convert to ps format}
+gene_coverage = otu_table(gene_coverage[,-1], taxa_are_rows = TRUE)
+functional_genes = tax_table(as.matrix(functional_genes[-c(1,3,5)]))
+sample_dat = sample_data(sample_dat)
+Functional_genes_physeq = phyloseq(gene_coverage, functional_genes, sample_dat)#23511 taxa and 90 samples
+```
+```{r}
+#inspect phyloseq object
+head(rank_names(Functional_genes_physeq))
+```
+```{r merge contigs by gene and KO number}
+Functional_genes_GLOM <- tax_glom(Functional_genes_physeq, taxrank = "KO_gene")
+taxa_names(Functional_genes_GLOM) <- tax_table(Functional_genes_GLOM)[,5]
+saveRDS(Functional_genes_GLOM, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Functional_genes_physeq.rds")#export phyloseq files
+```
+# 1. Alpha diversity analysis of all biogeochemical cycling genes
+```{r calculate alpha diversity}
+Functional_genes_GLOM.r = transform_sample_counts(Functional_genes_GLOM, round) #round counts
+Functional_genes_GLOM.alpha = estimate_richness(Functional_genes_GLOM.r)
+```
+```{r edit alpha diversity dataframe}
+sampleDat_all <- as.matrix(Functional_genes_GLOM.r@sam_data)
+sampleDat_all <- as.data.frame(sampleDat_all)#export to dataframe
+
+genes_all_alpha <- cbind(Functional_genes_GLOM.alpha, sampleDat_all) #bind dataframes
+genes_all_alpha <- genes_all_alpha[c(1, 6, 11:20)]
+
+genes_all_alpha$Forest <- as.factor(genes_all_alpha$Forest)
+genes_all_alpha$DB_symptomatic <- as.factor(genes_all_alpha$DB_symptomatic)
+genes_all_alpha$Location <- as.factor(genes_all_alpha$Location)
+genes_all_alpha <- genes_all_alpha %>% mutate_if(is.character, as.numeric)
+
+write.csv(genes_all_alpha, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/genes_all_alpha.csv") #export results
+```
+```{r melt and summarise alpha diversity DF}
+genes_all_alpha.m <- melt(genes_all_alpha[,1:5])
+genes_all_alpha.se <- summarySE(genes_all_alpha.m, measurevar = "value", groupvars =c("Forest","Location","variable"))
+genes_all_alpha.se$Forest <- as.factor(genes_all_alpha.se$Forest)
+genes_all_alpha.se$Location <- as.factor(genes_all_alpha.se$Location)
+```
+##PLOTTING ALPHA DIVERSITY
+```{r add in CAZy data}
+CAZy_GLOM.alpha <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/CAZy_alpha.csv")
+rownames(CAZy_GLOM.alpha) <- CAZy_GLOM.alpha$X
+CAZy_GLOM.alpha <- CAZy_GLOM.alpha[c(2,7)]
+colnames(CAZy_GLOM.alpha) <- c("Observed_CAZy", "Shannon_CAZy")
+```
+```{r add in eggNOG data}
+eggnog_GLOM.alpha2 <- eggnog_GLOM.alpha[c(1,6)]
+colnames(eggnog_GLOM.alpha2) <- c("Observed_eggNOG", "Shannon_eggNOG")
+```
+```{r merge dataframes}
+genes_all_alpha <- cbind(genes_all_alpha, CAZy_GLOM.alpha, eggnog_GLOM.alpha2)
+#export for correlation analysis later on
+write.csv(genes_all_alpha, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Correlation analysis/genes_all_alpha.csv")
+```
+#set order to reflect disturbance gradient
+```{r}
+genes_all_alpha$Forest <- factor(genes_all_alpha$Forest, levels = c("Hirakimata", "Puketi", "Glenfern", "Windy_Hill", "Laingholm", "Silverdale", "Gadgil",  "Oratia", "Kaiaraara"))
+levels(genes_all_alpha$Forest)[4] <- "Windy Hill"
+genes_all_alpha$Location <- as.factor(genes_all_alpha$Location)
+```
+```{r kruskal wallis of alpha diversity, warning=FALSE}
+#Shannon
+kruskal.test(genes_all_alpha$Shannon, genes_all_alpha$Forest) #Forest site
+Shannon_wilcox <- pairwise.wilcox.test(genes_all_alpha$Shannon, genes_all_alpha$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Shannon_wilcox.matrix = fullPTable(Shannon_wilcox$p.value) 
+multcompLetters(Shannon_wilcox.matrix)
+wilcox.test(Shannon ~ Location, data = genes_all_alpha) #Offshore vs mainland
+
+#Observed
+kruskal.test(genes_all_alpha$Observed, genes_all_alpha$Forest) #Forest site
+Observed_wilcox <- pairwise.wilcox.test(genes_all_alpha$Observed, genes_all_alpha$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Observed_wilcox.Matrix = fullPTable(Observed_wilcox$p.value) 
+multcompLetters(Observed_wilcox.Matrix)
+wilcox.test(Observed ~ Location, data = genes_all_alpha) #Offshore vs mainland
+```
+```{r alpha diversity bacterial genera}
+#Shannon
+kruskal.test(genes_all_alpha$Shannon.1, genes_all_alpha$Forest) #Forest site
+Shannon_wilcox.1 <- pairwise.wilcox.test(genes_all_alpha$Shannon.1, genes_all_alpha$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Shannon_wilcox.matrix.1 = fullPTable(Shannon_wilcox.1$p.value) 
+multcompLetters(Shannon_wilcox.matrix.1)
+wilcox.test(Shannon.1 ~ Location, data = genes_all_alpha) #Offshore vs mainland
+
+#Observed
+kruskal.test(genes_all_alpha$Observed.1, genes_all_alpha$Forest) #Forest site
+Observed_wilcox.1 <- pairwise.wilcox.test(genes_all_alpha$Observed.1, genes_all_alpha$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Observed_wilcox.Matrix.1 = fullPTable(Observed_wilcox.1$p.value) 
+multcompLetters(Observed_wilcox.Matrix.1)
+wilcox.test(Observed.1 ~ Location, data = genes_all_alpha) #Offshore vs mainland
+```
+```{r alpha diversity cazy genes}
+#Shannon
+kruskal.test(genes_all_alpha$Shannon_CAZy, genes_all_alpha$Forest) #Forest site
+Shannon_wilcox.CAZ <- pairwise.wilcox.test(genes_all_alpha$Shannon_CAZy, genes_all_alpha$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Shannon_wilcox.matrix.CAZ = fullPTable(Shannon_wilcox.CAZ$p.value) 
+multcompLetters(Shannon_wilcox.matrix.CAZ)
+wilcox.test(Shannon_CAZy ~ Location, data = genes_all_alpha) #Offshore vs mainland
+
+#Observed
+kruskal.test(genes_all_alpha$Observed_CAZy, genes_all_alpha$Forest) #Forest site
+Observed_wilcox.CAZ <- pairwise.wilcox.test(genes_all_alpha$Observed_CAZy, genes_all_alpha$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Observed_wilcox.Matrix.CAZ = fullPTable(Observed_wilcox.CAZ$p.value) 
+multcompLetters(Observed_wilcox.Matrix.CAZ)
+wilcox.test(Observed_CAZy ~ Location, data = genes_all_alpha) #Offshore vs mainland
+```
+```{r alpha diversity eggNOG genes}
+#Shannon
+kruskal.test(genes_all_alpha$Shannon_eggNOG, genes_all_alpha$Forest) #Forest site
+Shannon_wilcox.eggNOG <- pairwise.wilcox.test(genes_all_alpha$Shannon_eggNOG, genes_all_alpha$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Shannon_wilcox.matrix.eggNOG = fullPTable(Shannon_wilcox.eggNOG$p.value) 
+multcompLetters(Shannon_wilcox.matrix.eggNOG)
+wilcox.test(Shannon_eggNOG ~ Location, data = genes_all_alpha) #Offshore vs mainland
+
+#Observed
+kruskal.test(genes_all_alpha$Observed_eggNOG, genes_all_alpha$Forest) #Forest site
+Observed_wilcox.eggnog <- pairwise.wilcox.test(genes_all_alpha$Observed_eggNOG, genes_all_alpha$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Observed_wilcox.Matrix.eggnog = fullPTable(Observed_wilcox.eggnog$p.value) 
+multcompLetters(Observed_wilcox.Matrix.eggnog)
+wilcox.test(Observed_eggNOG ~ Location, data = genes_all_alpha) #Offshore vs mainland
+```
+
+#BIOGEOCHEMICAL CYCLING GENES
+```{r plot Observed genes biogeochem}
+alpha_Observed <- ggplot(data=genes_all_alpha, aes(y=Forest, x=Observed, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Observed: Metabolic genes")+
+  theme(axis.text.y = element_text(colour = "black", size = 10),
+  axis.text.x = element_text(colour = "black", size = 8),
+  axis.title.x = element_text(size = 12))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(360, 520))+
+  annotate("text", x = 520, y=9, label= "a", size=4)+ #these need to be in reverse order for when you flip the y axis
+  annotate("text", x = 520, y=8, label= "a", size=4)+
+  annotate("text", x = 520, y=7, label= "b", size=4)+
+  annotate("text", x = 520, y=6, label= "cd", size=4)+
+  annotate("text", x = 520, y=5, label= "ce", size=4)+
+  annotate("text", x = 520, y=4, label= "ae", size=4)+
+  annotate("text", x = 520, y=3, label= "d", size=4)+
+  annotate("text", x = 520, y=2, label= "bd", size=4)+
+  annotate("text", x = 520, y=1, label= "f", size=4)+
+  labs(caption="KW Chi-sq=76.78, p<0.001") +
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+alpha_Observed_metabolic <- alpha_Observed + scale_y_discrete(limits=rev)
+```
+```{r plot Shannon diversity biogeochem}
+alpha_Shannon <- ggplot(data=genes_all_alpha, aes(y=Forest, x=Shannon, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Shannon: Metabolic genes")+
+  theme(axis.text.y = element_text(colour = "black", size = 10),
+  axis.text.x = element_text(colour = "black", size = 8),
+  axis.title.x = element_text(size = 12))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(5.45, 5.7))+
+  annotate("text", x = 5.7, y=9, label= "ab", size=4)+
+  annotate("text", x = 5.7, y=8, label= "abc", size=4)+
+  annotate("text", x = 5.7, y=7, label= "a", size=4)+
+  annotate("text", x = 5.7, y=6, label= "ab", size=4)+
+  annotate("text", x = 5.7, y=5, label= "d", size=4)+
+  annotate("text", x = 5.7, y=4, label= "de", size=4)+
+  annotate("text", x = 5.7, y=3, label= "c", size=4)+
+  annotate("text", x = 5.7, y=2, label= "be", size=4)+
+  annotate("text", x = 5.7, y=1, label= "bde", size=4)+
+  labs(caption="KW Chi-sq=60.96, p<0.001") +
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+alpha_Shannon_metabolic <- alpha_Shannon + scale_y_discrete(limits=rev)
+```
+#BACTERIAL GENERA
+```{r plot Observed bacterial genera}
+alpha_Observed_a <- ggplot(data=genes_all_alpha, aes(y=Forest, x=Observed.1, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Observed: Bacterial genera")+
+  theme(axis.text.y = element_text(colour = "black", size = 10),
+  axis.text.x = element_text(colour = "black", size = 8),
+  axis.title.x = element_text(size = 12))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(1100, 1180))+
+  annotate("text", x = 1180, y=9, label= "ab", size=4)+
+  annotate("text", x = 1180, y=8, label= "ab", size=4)+
+  annotate("text", x = 1180, y=7, label= "c", size=4)+
+  annotate("text", x = 1180, y=6, label= "ac", size=4)+
+  annotate("text", x = 1180, y=5, label= "ac", size=4)+
+  annotate("text", x = 1180, y=4, label= "ab", size=4)+
+  annotate("text", x = 1180, y=3, label= "c", size=4)+
+  annotate("text", x = 1180, y=2, label= "ac", size=4)+
+  annotate("text", x = 1180, y=1, label= "b", size=4)+
+  labs(caption="KW Chi-sq=58.11, p<0.001") +
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+alpha_Observed_bacteria <- alpha_Observed_a + scale_y_discrete(limits=rev)
+```
+```{r plot Observed bacterial genera}
+alpha_Shannon_a <- ggplot(data=genes_all_alpha, aes(y=Forest, x=Shannon.1, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Shannon: Bacterial genera")+
+  theme(axis.text.y = element_text(colour = "black", size = 10),
+  axis.text.x = element_text(colour = "black", size = 8),
+  axis.title.x = element_text(size = 12))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(4.4, 5.35))+
+  annotate("text", x = 5.35, y=9, label= "a", size=4)+
+  annotate("text", x = 5.35, y=8, label= "ab", size=4)+
+  annotate("text", x = 5.35, y=7, label= "c", size=4)+
+  annotate("text", x = 5.35, y=6, label= "c", size=4)+
+  annotate("text", x = 5.35, y=5, label= "c", size=4)+
+  annotate("text", x = 5.35, y=4, label= "d", size=4)+
+  annotate("text", x = 5.35, y=3, label= "c", size=4)+
+  annotate("text", x = 5.35, y=2, label= "c", size=4)+
+  annotate("text", x = 5.35, y=1, label= "b", size=4)+
+  labs(caption="KW Chi-sq=69.79, p<0.001") +
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+alpha_Shannon_bacteria <- alpha_Shannon_a + scale_y_discrete(limits=rev)
+```
+##CAZY FAMILIES
+```{r plot Observed genes biogeochem}
+alpha_Observed_b <- ggplot(data=genes_all_alpha, aes(y=Forest, x=Observed_CAZy, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Observed: CAZy genes")+
+  theme(axis.text.y = element_text(colour = "black", size = 10),
+  axis.text.x = element_text(colour = "black", size = 8),
+  axis.title.x = element_text(size = 12))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(95, 190))+
+  annotate("text", x = 190, y=9, label= "a", size=4)+
+  annotate("text", x = 190, y=8, label= "b", size=4)+
+  annotate("text", x = 190, y=7, label= "c", size=4)+
+  annotate("text", x = 190, y=6, label= "d", size=4)+
+  annotate("text", x = 190, y=5, label= "b", size=4)+
+  annotate("text", x = 190, y=4, label= "ab", size=4)+
+  annotate("text", x = 190, y=3, label= "d", size=4)+
+  annotate("text", x = 190, y=2, label= "d", size=4)+
+  annotate("text", x = 190, y=1, label= "e", size=4)+
+  labs(caption="KW Chi-sq=60.58, p<0.001") +
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+alpha_Observed_cazy <- alpha_Observed_b + scale_y_discrete(limits=rev)
+```
+```{r plot Shannon diversity biogeochem}
+alpha_Shannon_b <- ggplot(data=genes_all_alpha, aes(y=Forest, x=Shannon_CAZy, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Shannon: CAZy genes")+
+  theme(axis.text.y = element_text(colour = "black", size = 10),
+  axis.text.x = element_text(colour = "black", size = 8),
+  axis.title.x = element_text(size = 12))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  scale_x_continuous(n.breaks = 10, limits = c(3.4, 4))+
+  annotate("text", x = 4, y=9, label= "a", size=4)+
+  annotate("text", x = 4, y=8, label= "ab", size=4)+
+  annotate("text", x = 4, y=7, label= "c", size=4)+
+  annotate("text", x = 4, y=6, label= "ab", size=4)+
+  annotate("text", x = 4, y=5, label= "a", size=4)+
+  annotate("text", x = 4, y=4, label= "a", size=4)+
+  annotate("text", x = 4, y=3, label= "b", size=4)+
+  annotate("text", x = 4, y=2, label= "ab", size=4)+
+  annotate("text", x = 4, y=1, label= "d", size=4)+
+  labs(caption="KW Chi-sq=79.07, p<0.001") +
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+alpha_Shannon_cazy <- alpha_Shannon_b + scale_y_discrete(limits=rev)
+```
+#eggNOG genes
+```{r plot Observed genes biogeochem}
+alpha_Observed_c <- ggplot(data=genes_all_alpha, aes(y=Forest, x=Observed_eggNOG, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Observed: EggNOG OGs")+
+  theme(axis.text.y = element_text(colour = "black", size = 10),
+  axis.text.x = element_text(colour = "black", size = 8),
+  axis.title.x = element_text(size = 12))+
+  ylab("")+
+  scale_fill_brewer(palette = "YlOrRd")+
+  annotate("text", x = 136200, y=9, label= "a", size=4)+
+  annotate("text", x = 136200, y=8, label= "a", size=4)+
+  annotate("text", x = 136200, y=7, label= "b", size=4)+
+  annotate("text", x = 136200, y=6, label= "c", size=4)+
+  annotate("text", x = 136200, y=5, label= "d", size=4)+
+  annotate("text", x = 136200, y=4, label= "ad", size=4)+
+  annotate("text", x = 136200, y=3, label= "c", size=4)+
+  annotate("text", x = 136200, y=2, label= "bc", size=4)+
+  annotate("text", x = 136200, y=1, label= "e", size=4)+
+  labs(caption="KW Chi-sq=78.53, p<0.001") +
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+alpha_Observed_eggnog <- alpha_Observed_c + scale_y_discrete(limits=rev)
+```
+```{r plot Shannon diversity biogeochem}
+alpha_Shannon_C <- ggplot(data=genes_all_alpha, aes(y=Forest, x=Shannon_eggNOG, group=Forest, color=Forest)) +
+  geom_violin(aes(fill=Forest), color="black", scale = "width")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  stat_summary(fun=mean, geom="point", shape=21, size=3, color="black", fill="black") +
+  theme_bw(base_size = 15)+
+  xlab("Shannon: EggNOG OGs")+
+  theme(axis.text.y = element_text(colour = "black", size = 10),
+  axis.text.x = element_text(colour = "black", size = 8),
+  axis.title.x = element_text(size = 12))+
+  ylab("")+
+  scale_x_continuous(n.breaks = 10, limits = c(9.75, 11.5))+
+  scale_fill_brewer(palette = "YlOrRd")+
+  annotate("text", x = 11.5, y=9, label= "ab", size=4)+
+  annotate("text", x = 11.5, y=8, label= "a", size=4)+
+  annotate("text", x = 11.5, y=7, label= "c", size=4)+
+  annotate("text", x = 11.5, y=6, label= "cd", size=4)+
+  annotate("text", x = 11.5, y=5, label= "a", size=4)+
+  annotate("text", x = 11.5, y=4, label= "a", size=4)+
+  annotate("text", x = 11.5, y=3, label= "d", size=4)+
+  annotate("text", x = 11.5, y=2, label= "c", size=4)+
+  annotate("text", x = 11.5, y=1, label= "b", size=4)+
+  labs(caption="KW Chi-sq=71.18, p<0.001") +
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0))
+alpha_Shannon_eggnog <- alpha_Shannon_C + scale_y_discrete(limits=rev)
+```
+
+```{r combine and export plots}
+alpha_Observed_metabolic <- alpha_Observed_metabolic + theme(plot.margin = unit(c(0.2,0.2,0.2,0.2), 'lines'))
+alpha_Shannon_metabolic <- alpha_Shannon_metabolic + theme(plot.margin = unit(c(0.2,0.2,0.2,0.2), 'lines'))
+alpha_Observed_bacteria <- alpha_Observed_bacteria + theme(plot.margin = unit(c(0.2,0.2,0.2,0.2), 'lines'))
+alpha_Shannon_bacteria <- alpha_Shannon_bacteria + theme(plot.margin = unit(c(0.2,0.2,0.2,0.2), 'lines'))
+alpha_Observed_cazy <- alpha_Observed_cazy + theme(plot.margin = unit(c(0.2,0.2,0.2,0.2), 'lines'))
+alpha_Shannon_cazy <- alpha_Shannon_cazy + theme(plot.margin = unit(c(0.2,0.2,0.2,0.2), 'lines'))
+alpha_Observed_eggnog <- alpha_Observed_eggnog + theme(plot.margin = unit(c(0.2,0.2,0.2,0.2), 'lines'))
+alpha_Shannon_eggnog <- alpha_Shannon_eggnog + theme(plot.margin = unit(c(0.2,0.2,0.2,0.2), 'lines'))
+```
+```{r one big plot}
+plot_ALL <- ggarrange(alpha_Observed_bacteria, alpha_Observed_eggnog, alpha_Observed_metabolic, alpha_Observed_cazy, alpha_Shannon_bacteria, alpha_Shannon_eggnog, alpha_Shannon_metabolic, alpha_Shannon_cazy, common.legend = TRUE, legend = "none", nrow = 2, ncol = 4, align = "hv", widths = c(-1, -1, -1, -1, -1, -1, -1, -1), labels = c("A1)", "B1)", "C1)", "D1)", "A2)", "B2)", "C2)", "D2)"), vjust = 1.2, hjust = -0.3, font.label = list(size=12))
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/alpha_diversity_edited.png', width = 8500, height = 4100, res = 500)
+plot_ALL
+```
+
+```{r beta diversity analysis}
+beta_bray <- phyloseq::distance(Functional_genes_GLOM, "bray")#using non-rounded counts
+#permanova tests in vegan
+adonis2(beta_bray ~ sampleDat_all$Forest) 
+#pairwise adonis tests
+pairwise.adonis(beta_bray, sampleDat_all$Forest, sim.function = "vegdist", sim.method = "bray", p.adjust.m = "holm", perm = 999) 
+```
+```{r plotting NMDS}
+#edit names, change order of forests
+sample_data(Functional_genes_GLOM)$Forest <- factor(sample_data(Functional_genes_GLOM)$Forest, levels = c("Hirakimata", "Puketi", "Glenfern", "Windy_Hill", "Laingholm", "Silverdale", "Gadgil",  "Oratia", "Kaiaraara"))
+levels(sample_data(Functional_genes_GLOM)$Forest)[4] <- "Windy Hill"
+```
+```{r}
+functionGenes.ord <- ordinate(Functional_genes_GLOM, "NMDS", "bray")
+```
+```{r}
+functionGenes.ordPlot = plot_ordination(Functional_genes_GLOM, functionGenes.ord, type="samples", color="Forest", title = "C) Metabolic genes") +
+geom_point(size=4)+
+geom_convexhull(alpha = 0.6, aes(fill = Forest))+
+theme_bw(base_size = 15)+  
+theme(axis.title = element_text(size = 12))+
+scale_color_brewer(palette = "YlOrRd")+
+scale_fill_brewer(palette = "YlOrRd")
+```
+##combining NMDS plots
+```{r}
+Bacteria.ordPlot <- readRDS("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/Bacteria.ordPlot.rds")
+```
+```{r}
+Bacteria.ordPlot2 <- Bacteria.ordPlot + labs(caption="PERMANOVA: R2=0.73, p<0.001") + 
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size=15))
+
+EG_Genes.ordPlot2 <- eggnogGenes.ordPlot + labs(caption="PERMANOVA: R2=0.62, p<0.001") + 
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size=15))
+
+F_Genes.ordPlot2 <- functionGenes.ordPlot + labs(caption="PERMANOVA: R2=0.84, p<0.001") + 
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size=15))
+
+cazyGenes.ordPlot2 <- cazyGenes.ordPlot + labs(caption="PERMANOVA: R2=0.73, p<0.001") + 
+  theme(plot.caption = element_text(size=12, face = "italic", hjust = 0),
+        axis.title = element_text(size = 12),
+        plot.title = element_text(size=15))
+
+NMDS_plots <- ggarrange(Bacteria.ordPlot2, EG_Genes.ordPlot2, F_Genes.ordPlot2, cazyGenes.ordPlot2, common.legend = TRUE, legend = "right", align = "hv")
+```
+```{r}
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/NMDS_plots.png', width = 5000, height = 4000, res = 500)
+NMDS_plots
+```
+
+
+
+
+
+##DA analysis ANCOM-BC: category level
+```{r set Hirakimata forest as reference group}
+Functional_genes_GLOM2 <- Functional_genes_GLOM
+sample_data(Functional_genes_GLOM2)$Forest <- factor(sample_data(Functional_genes_GLOM2)$Forest, levels = c("Hirakimata", "Puketi", "Glenfern", "Windy_Hill", "Laingholm", "Silverdale", "Gadgil",  "Oratia", "Kaiaraara"))
+levels(sample_data(Functional_genes_GLOM2)$Forest)#check Hirakimata is reference group
+colnames(tax_table(Functional_genes_GLOM2)) <- c("Phylum", "Class", "Order", "Family", "Genus")
+```
+##Abreviate names for purposes of plotting
+```{r}
+levels(sample_data(Functional_genes_GLOM2)$Forest) <- c("HKM", "PUK", "GF", "WH", "LAING", "SILV", "GAD", "ORA", "KAI")
+```
+##merge with cazy gene categories for ANCOM-BC analysis
+```{r}
+##check levels match
+levels(sample_data(Functional_genes_GLOM2)$Forest)
+levels(sample_data(CAZy_GLOM2)$Forest)
+Functional_genes_GLOM.merged <- merge_phyloseq(Functional_genes_GLOM2, CAZy_GLOM2)
+```
+```{r ancombc on gene category, warning=FALSE}
+set.seed(71)
+ancombc_category = ancombc2(data = Functional_genes_GLOM.merged,
+                  tax_level = "Phylum",
+                  fix_formula = "Forest", 
+                  p_adj_method = "holm", 
+                  prv_cut = 0, lib_cut = 0, s0_perc = 0.05,
+                  pseudo = 0, pseudo_sens = FALSE,
+                  group = "Forest", struc_zero = FALSE, neg_lb = FALSE,
+                  alpha = 0.05, 
+                  global = TRUE, pairwise = TRUE,
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100))
+```
+
+##plot results of ANCOM-BC analysis
+```{r}
+Gene_category_pairwise <- ancombc_category$res_pair
+#edit column names to remove Forest string
+names(Gene_category_pairwise) = gsub(pattern = "_Forest", replacement = "_", x = names(Gene_category_pairwise))
+names(Gene_category_pairwise) = gsub(pattern = "_", replacement = "-", x = names(Gene_category_pairwise))
+```
+```{r rename specific columns}
+# Create a vector of variable names from the given list
+colnames(Gene_category_pairwise)[182:189] <- c("diff-PUK-HKM",   "diff-GF-HKM",  "diff-WH-HKM",  "diff-LAING-HKM",  "diff-SILV-HKM",  "diff-GAD-HKM",  "diff-ORA-HKM", "diff-KAI-HKM")
+colnames(Gene_category_pairwise)[2:9] <- c("lfc-PUK-HKM",   "lfc-GF-HKM",  "lfc-WH-HKM",  "lfc-LAING-HKM",  "lfc-SILV-HKM",  "lfc-GAD-HKM",  "lfc-ORA-HKM", "lfc-KAI-HKM")
+```
+```{r #change insignificant p-values to zero}
+Gene_category_pairwise2 <- Gene_category_pairwise
+
+# Define a threshold for p-values
+p_threshold <- 0.05
+# Create sample matrices of p-values
+p_matrix <- as.data.frame(Gene_category_pairwise2[,146:181])
+
+# Apply threshold: Set values to zero where p-value > p_threshold
+Gene_category_pairwise2[,2:37][p_matrix > p_threshold] <- 0
+print(Gene_category_pairwise2)
+```
+```{r export results for supplementary materials}
+ancombc_category_GLOBAL <- ancombc_category$res_global
+ancombc_category_RESULTS <- cbind(ancombc_category_GLOBAL, Gene_category_pairwise2[,1:37]) #combine with global test results
+write.csv(ancombc_category_RESULTS, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/ancombc_category_RESULTS.csv")
+```
+```{r edit category names}
+Gene_category_pairwise2$taxon <- as.factor(Gene_category_pairwise2$taxon)
+#edit gene names
+levels(Gene_category_pairwise2$taxon) <- c("Amino acid metabolism", "Aromatics degradation", "Arsenate cycling ", "Auxiliary Activities [CAZy]", "Carbohydrate Binding Module [CAZy]", "Carbohydrate Esterase [CAZy]", "Carbon degradation", "Carbon metabolism", "Chlorite reduction", "Fatty acid degradation", "Fermentation", "Glycoside Hydrolase [CAZy]", "GlycosylTransferase [CAZy]", "AOX degradation", "Hydrogenases", "Iron cycling", "Manganese cycling", "Methane metabolism", "Nitrogen cycling", "Polysaccharide Lyase [CAZy]", "Selenate reduction", "Sulfur metabolism")
+```
+```{r}
+diff_vars <- colnames(Gene_category_pairwise2[,182:217])
+# Dynamically create the list of `lfc_*` variables
+lfc_vars <- gsub("diff-", "lfc-", diff_vars)
+
+# Step 1: First data frame (df_fig_pair1)
+df_fig_pair1 <- Gene_category_pairwise2 %>%
+  #dplyr::filter(if_any(all_of(diff_vars), ~ . == 1)) %>% # Filter rows where any diff_var == 1
+  dplyr::mutate(across(all_of(diff_vars), ~ ifelse(. == 1, round(runif(1, -2, 2), 2), 0), 
+                       .names = "lfc-{.col}")) %>% # Create lfc_* columns
+  tidyr::pivot_longer(cols = all_of(lfc_vars), 
+                      names_to = "group", values_to = "value") %>%
+  dplyr::arrange(taxon)
+
+# Step 2: Recode group names and factor levels
+group_labels <- gsub("lfc-", "", lfc_vars) # Use original variable names as group labels
+df_fig_pair1$group <- dplyr::recode(df_fig_pair1$group, !!!setNames(group_labels, lfc_vars))
+df_fig_pair1$group <- factor(df_fig_pair1$group, levels = group_labels)
+```
+##PLOT
+```{r}
+df_fig_CAT <- dcast(df_fig_pair1[c(1,218:219)], taxon ~ group, value.var = "value")
+rownames(df_fig_CAT) <- df_fig_CAT$taxon
+```
+```{r}
+rg <- max(abs(as.matrix(df_fig_CAT[,-1])))
+CAT_heat_plot2 <- pheatmap(as.matrix(df_fig_CAT[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 60,
+                      treeheight_col = 60,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 16,          # row label font size
+                      fontsize_col = 16,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Log fold change values of metabolic gene categories between kauri forests", 
+                      fontsize = 16,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/metabolic_category.png",
+                      width = 15,
+                      height = 12)
+```
+##ANCOM-BC analysis at functional level
+```{r}
+#merge levels
+Func_GLOM <- tax_glom(Functional_genes_GLOM2, taxrank = "Class")
+taxa_names(Func_GLOM) <- tax_table(Func_GLOM)[,2]
+#combine assim and dissim nitrate reduction
+Func_GLOM.m <- merge_taxa(Func_GLOM, eqtaxa=c("Dissimilatory N reduction", "Assimilatory N reduction"), archetype=1L)
+#rename
+tax_table(Func_GLOM.m)[,2][is.na(tax_table(Func_GLOM.m)[,2])] <- "Nitrate reduction"
+#filter low abundance pathways
+Func_GLOM2 <- filter_taxa(Func_GLOM.m, function(x) sum(x > 50) > (0.2*length(x)), TRUE)
+```
+#export gene abundances for random forest analysis
+```{r}
+taxa_names(Func_GLOM) <- tax_table(Func_GLOM)[,2]
+functional_gene_abundance <- t(as.data.frame(Func_GLOM@otu_table))
+
+#category level
+Category_GLOM <- tax_glom(Functional_genes_GLOM2, taxrank = "Phylum") #215 genes and 90 samples
+taxa_names(Category_GLOM) <- tax_table(Category_GLOM)[,1]
+category_gene_abundance <- t(as.data.frame(Category_GLOM@otu_table))
+
+metabolic_gene_abundances <- cbind(category_gene_abundance, functional_gene_abundance)
+write.csv(metabolic_gene_abundances, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Correlation analysis/metabolic_gene_abundances.csv")
+```
+```{r}
+set.seed(71)
+ancombc_function = ancombc2(data = Func_GLOM2,
+                  tax_level = "Class",
+                  fix_formula = "Forest", 
+                  p_adj_method = "holm", 
+                  prv_cut = 0, lib_cut = 0, s0_perc = 0.05, 
+                  pseudo = 0, pseudo_sens = FALSE,
+                  group = "Forest", struc_zero = FALSE, neg_lb = FALSE,
+                  alpha = 0.05, 
+                  global = TRUE, pairwise = TRUE,
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100))
+```
+##Plot differences in functional abundances
+```{r}
+Gene_function_pairwise <- ancombc_function$res_pair
+#edit column names to remove Forest string
+names(Gene_function_pairwise) = gsub(pattern = "_Forest", replacement = "_", x = names(Gene_function_pairwise))
+names(Gene_function_pairwise) = gsub(pattern = "_", replacement = "-", x = names(Gene_function_pairwise))
+```
+```{r rename specific columns}
+# Create a vector of variable names from the given list
+colnames(Gene_function_pairwise)[182:189] <- c("diff-PUK-HKM", "diff-GF-HKM", "diff-WH-HKM", "diff-LAING-HKM", "diff-SILV-HKM", "diff-GAD-HKM", "diff-ORA-HKM", "diff-KAI-HKM")
+colnames(Gene_function_pairwise)[2:9] <- c("lfc-PUK-HKM", "lfc-GF-HKM", "lfc-WH-HKM", "lfc-LAING-HKM", "lfc-SILV-HKM", "lfc-GAD-HKM", "lfc-ORA-HKM", "lfc-KAI-HKM")
+```
+```{r #change insignificant p-values to zero}
+Gene_function_pairwise2 <- Gene_function_pairwise
+# Define a threshold for p-values
+p_threshold <- 0.05
+# Create sample matrices of p-values
+p_matrix <- as.data.frame(Gene_function_pairwise[,146:181])
+# Apply threshold: Set values to zero where p-value > p_threshold
+Gene_function_pairwise2[,2:37][p_matrix > p_threshold] <- 0
+print(Gene_function_pairwise2)
+```
+```{r export results for supplementary materials}
+ancombc_function_GLOBAL <- ancombc_function$res_global
+ancombc_function_RESULTS <- cbind(ancombc_function_GLOBAL, Gene_function_pairwise2[,1:37]) #combine with global test results
+write.csv(ancombc_function_RESULTS, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/ancombc_function_RESULTS.csv")
+```
+```{r}
+Gene_function_pairwise2$taxon <- as.factor(Gene_function_pairwise2$taxon)
+levels(Gene_function_pairwise2$taxon) <- c("3HP/4HB cycle", "Aerobic CO oxidation", "Aldehyde fermentation", "Amino acid biosynthesis", "Amino acid degradation", "Amino acid metabolism", "AOX degradation", "Aromatics degradation", "Arsenate cycling", "Assimilatory S reduction", "Calvin cycle", "Cellulose degradation", "Chitin degradation", "Chlorite reduction", "Cys/Met metabolism", "D-galactonate degradation", "D-galacturonate degradation", "DC/4HB", "Dissimilatory S reduction", "DMSO metabolism", "Ethanol fermentation", "Fatty acid degradation", "Formate oxidation", "Galactose degradation", "Glycolysis/Gluconeogenesis", "Glyoxylate cycle", "Hemicellulose degradation", "Iron oxidation", "Iron reduction", "Manganese oxidation", "Methane metabolism", "Methanogenesis", "Ni-Fe Hydrogenase", "Nitrate reduction", "Nitrile hydration", "Oxidative phosphorylation", "Photosynthesis", "PP pathway", "Propionate fermentation", "Pyruvate metabolism", "rTCA", "Starch degradation", "S oxidation", "Thiosulfate oxidation", "Urea utilization", "WL pathway")
+```
+```{r}
+diff_vars <- colnames(Gene_function_pairwise2[,182:217])
+# Dynamically create the list of `lfc_*` variables
+lfc_vars <- gsub("diff-", "lfc-", diff_vars)
+
+# Step 1: First data frame (df_fig_pair1)
+df_fig_pair1 <- Gene_function_pairwise2 %>%
+  #dplyr::filter(if_any(all_of(diff_vars), ~ . == 1)) %>% # Filter rows where any diff_var == 1
+  dplyr::mutate(across(all_of(diff_vars), ~ ifelse(. == 1, round(runif(1, -2, 2), 2), 0), 
+                       .names = "lfc-{.col}")) %>% # Create lfc_* columns
+  tidyr::pivot_longer(cols = all_of(lfc_vars), 
+                      names_to = "group", values_to = "value") 
+
+# Step 2: Recode group names and factor levels
+group_labels <- gsub("lfc-", "", lfc_vars) # Use original variable names as group labels
+df_fig_pair1$group <- dplyr::recode(df_fig_pair1$group, !!!setNames(group_labels, lfc_vars))
+df_fig_pair1$group <- factor(df_fig_pair1$group, levels = group_labels)
+```
+##edit plot to remove pathways with no signficant differences
+```{r}
+df_fig_pair_filtered <- df_fig_pair1[apply(df_fig_pair1[,182:217], 1, function(x) !all(x==0)),]
+```
+
+##PLOT
+```{r}
+df_fig_FUNC <- dcast(df_fig_pair_filtered[c(1,218:219)], taxon ~ group, value.var = "value")
+rownames(df_fig_FUNC) <- df_fig_FUNC$taxon
+```
+```{r}
+rg <- max(abs(as.matrix(df_fig_FUNC[,-1])))
+FUNC_heat_plot <- pheatmap(as.matrix(df_fig_FUNC[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 60,
+                      treeheight_col = 60,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 14,          # row label font size
+                      fontsize_col = 14,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Log fold change values of metabolic gene functions between kauri forests", 
+                      fontsize = 14,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/metabolic_function.png",
+                      width = 15,
+                      height = 12) 
+```
+##ANCOM-BC at gene level
+```{r filter low abundance genes}
+Functional_genes_GLOM3 = filter_taxa(Functional_genes_GLOM2, function(x) sum(x > 20) > (0.2*length(x)), TRUE)
+```
+```{r}
+set.seed(71)
+ancombc_gene = ancombc2(data = Functional_genes_GLOM3,
+                  tax_level = "Genus",
+                  fix_formula = "Forest", 
+                  p_adj_method = "holm", 
+                  prv_cut = 0, lib_cut = 0, s0_perc = 0.05, 
+                  pseudo = 0, pseudo_sens = FALSE,
+                  group = "Forest", struc_zero = FALSE, neg_lb = FALSE,
+                  alpha = 0.05, 
+                  global = TRUE, pairwise = TRUE,
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100))
+```
+##Plot differences in GENE abundances
+```{r}
+Gene_pairwise <- ancombc_gene$res_pair
+#edit column names to remove Forest string
+names(Gene_pairwise) = gsub(pattern = "_Forest", replacement = "_", x = names(Gene_pairwise))
+names(Gene_pairwise) = gsub(pattern = "_", replacement = "-", x = names(Gene_pairwise))
+```
+```{r add in category column}
+Category <- as.data.frame(tax_table(Functional_genes_GLOM3)[,1])
+Gene_pairwise <- cbind(Category$Phylum, Gene_pairwise)
+names(Gene_pairwise)[1] <- "Category" 
+Gene_pairwise$Category <- as.factor(Gene_pairwise$Category)
+```
+```{r add in function column}
+Function <- as.data.frame(tax_table(Functional_genes_GLOM3)[,2])
+Gene_pairwise <- cbind(Function$Class, Gene_pairwise)
+names(Gene_pairwise)[1] <- "Function" 
+Gene_pairwise$Function <- as.factor(Gene_pairwise$Function)
+```
+```{r rename specific columns}
+# Create a vector of variable names from the given list
+colnames(Gene_pairwise)[184:191] <- c("diff-PUK-HKM", "diff-GF-HKM", "diff-WH-HKM", "diff-LAING-HKM", "diff-SILV-HKM", "diff-GAD-HKM", "diff-ORA-HKM", "diff-KAI-HKM")
+colnames(Gene_pairwise)[4:11] <- c("lfc-PUK-HKM", "lfc-GF-HKM", "lfc-WH-HKM", "lfc-LAING-HKM", "lfc-SILV-HKM", "lfc-GAD-HKM", "lfc-ORA-HKM", "lfc-KAI-HKM")
+```
+```{r #change insignificant p-values to zero}
+Gene_pairwise2 <- Gene_pairwise
+
+# Define a threshold for p-values
+p_threshold <- 0.05
+# Create sample matrices of p-values
+p_matrix <- as.data.frame(Gene_pairwise[,148:183])
+
+# Apply threshold: Set values to zero where p-value > p_threshold
+Gene_pairwise2[,4:39][p_matrix > p_threshold] <- 0
+print(Gene_pairwise2)
+```
+```{r}
+ancombc_gene_GLOBAL <- ancombc_gene$res_global
+ancombc_gene_RESULTS <- cbind(ancombc_gene_GLOBAL, Gene_pairwise2[,1:39]) #combine with global test results
+write.csv(ancombc_gene_RESULTS, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/ancombc_gene_RESULTS.csv")
+```
+
+#filter genes containing all zero lfc values
+```{r}
+Gene_pairwise_filtered <- Gene_pairwise2[apply(Gene_pairwise2[,4:39], 1, function(x) !all(x==0)),]
+```
+```{r}
+diff_vars <- colnames(Gene_pairwise_filtered[,184:219])
+# Dynamically create the list of `lfc_*` variables
+lfc_vars <- gsub("diff-", "lfc-", diff_vars)
+
+# Step 1: First data frame (df_fig_pair1)
+df_fig_pair1 <- Gene_pairwise_filtered %>%
+  #dplyr::filter(if_any(all_of(diff_vars), ~ . == 1)) %>% # Filter rows where any diff_var == 1
+  dplyr::mutate(across(all_of(diff_vars), ~ ifelse(. == 1, round(runif(1, -2, 2), 2), 0), 
+                       .names = "lfc-{.col}")) %>% # Create lfc_* columns
+  tidyr::pivot_longer(cols = all_of(lfc_vars), 
+                      names_to = "group", values_to = "value") %>%
+  dplyr::arrange(Function)
+```
+```{r}
+# Step 2: Recode group names and factor levels
+group_labels <- gsub("lfc-", "", lfc_vars) # Use original variable names as group labels
+df_fig_pair1$group <- dplyr::recode(df_fig_pair1$group, !!!setNames(group_labels, lfc_vars))
+df_fig_pair1$group <- factor(df_fig_pair1$group, levels = group_labels)
+```
+##subset groups and plot separately
+```{r}
+df_C_cyc <- subset(df_fig_pair1, Category == "Carbon degradation")
+df_N_cyc <- subset(df_fig_pair1, Category == "Nitrogen cycling")
+df_C_met <- subset(df_fig_pair1, Category == "Carbon metabolism")
+df_C1_met <- subset(df_fig_pair1, Category == "Methane metabolism")
+df_S_met <- subset(df_fig_pair1, Category == "Sulfur metabolism")
+df_AA_met <- subset(df_fig_pair1, Category == "Amino acid metabolism")
+df_Ar_deg <- subset(df_fig_pair1, Category == "Aromatics degradation")
+```
+```{r convert to wide format}
+df_C_cyc <- dcast(df_C_cyc[c(3,220:221)], taxon ~ group, value.var = "value")
+rownames(df_C_cyc) <- df_C_cyc$taxon
+df_N_cyc <- dcast(df_N_cyc[c(3,220:221)], taxon ~ group, value.var = "value")
+rownames(df_N_cyc) <- df_N_cyc$taxon
+df_C_met <- dcast(df_C_met[c(3,220:221)], taxon ~ group, value.var = "value")
+rownames(df_C_met) <- df_C_met$taxon
+df_C1_met <- dcast(df_C1_met[c(3,220:221)], taxon ~ group, value.var = "value")
+rownames(df_C1_met) <- df_C1_met$taxon
+df_S_met <- dcast(df_S_met[c(3,220:221)], taxon ~ group, value.var = "value")
+rownames(df_S_met) <- df_S_met$taxon
+df_AA_met <- dcast(df_AA_met[c(3,220:221)], taxon ~ group, value.var = "value")
+rownames(df_AA_met) <- df_AA_met$taxon
+df_Ar_deg <- dcast(df_Ar_deg[c(3,220:221)], taxon ~ group, value.var = "value")
+rownames(df_Ar_deg) <- df_Ar_deg$taxon
+```
+```{r C degradation genes plot}
+rg <- max(abs(as.matrix(df_C_cyc[,-1])))
+df_C_cyc_plot <- pheatmap(as.matrix(df_C_cyc[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 60,
+                      treeheight_col = 50,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 12,          # row label font size
+                      fontsize_col = 12,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "A) Log fold change values of C degradation genes between kauri forests", 
+                      fontsize = 12,
+                      #filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_carbon_deg.png",
+                      width = 15,
+                      height = 12) # a title for our heatmap
+```
+```{r}
+rg <- max(abs(as.matrix(df_N_cyc[,-1])))
+df_N_cyc_plot <- pheatmap(as.matrix(df_N_cyc[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 60,
+                      treeheight_col = 50,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 12,          # row label font size
+                      fontsize_col = 12,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "B) Log fold change values of N cycling genes between kauri forests", 
+                      fontsize = 12,
+                      #filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_carbon_deg.png",
+                      width = 15,
+                      height = 8) # a title for our heatmap
+```
+##combine C and N cycling genes plots
+```{r}
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/CN_genes_heatmap.png', width = 6000, height = 6000, res = 450)
+ggarrange(df_C_cyc_plot$gtable, df_N_cyc_plot$gtable, nrow = 2, ncol = 1, align = "v", heights = c(2,1))
+```
+```{r C metabolism genes plot}
+rg <- max(abs(as.matrix(df_C_met[,-1])))
+df_C_met_plot <- pheatmap(as.matrix(df_C_met[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 40,
+                      treeheight_col = 40,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 11,          # row label font size
+                      fontsize_col = 14,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Log fold change values of C metabolism genes between kauri forests", 
+                      fontsize = 14,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_carbon_met.png",
+                      width = 13,
+                      height = 18) # a title for our heatmap
+```
+```{r C1 metabolism genes plot}
+rg <- max(abs(as.matrix(df_C1_met[,-1])))
+df_C1_met_plot <- pheatmap(as.matrix(df_C1_met[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 40,
+                      treeheight_col = 40,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 14,          # row label font size
+                      fontsize_col = 14,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Log fold change values of C1 metabolism genes between kauri forests", 
+                      fontsize = 14,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_C1_met.png",
+                      width = 12,
+                      height = 10) # a title for our heatmap
+```
+##sulphur
+```{r}
+rg <- max(abs(as.matrix(df_S_met[,-1])))
+df_S_cyc_plot <- pheatmap(as.matrix(df_S_met[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 40,
+                      treeheight_col = 40,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 14,          # row label font size
+                      fontsize_col = 14,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Log fold change values of S metabolism genes between kauri forests", 
+                      fontsize = 14,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_sulfur_met.png",
+                      width = 12,
+                      height = 10) # a title for our heatmap
+```
+#amino acids
+```{r}
+rg <- max(abs(as.matrix(df_AA_met[,-1])))
+df_AA_met_plot <- pheatmap(as.matrix(df_AA_met[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 40,
+                      treeheight_col = 40,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 14,          # row label font size
+                      fontsize_col = 14,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Log fold change values of amino acid metabolism genes between kauri forests", 
+                      fontsize = 14,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_AA_met.png",
+                      width = 12,
+                      height = 15) # a title for our heatmap
+```
+#aromatics
+```{r}
+rg <- max(abs(as.matrix(df_Ar_deg[,-1])))
+df_Ar_deg_plot <- pheatmap(as.matrix(df_Ar_deg[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_method = 'ward.D',
+                      treeheight_row = 40,
+                      treeheight_col = 40,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 14,          # row label font size
+                      fontsize_col = 14,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Log fold change values of aromatics degradation genes between kauri forests", 
+                      fontsize = 14,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_Ar_deg.png",
+                      width = 12,
+                      height = 10) # a title for our heatmap
+```
+##abundances of metabolic categories
+```{r convert to relative abundance}
+Functional_genes_RA = transform_sample_counts(Functional_genes_GLOM, function(x) x / sum(x) *100)
+```
+```{r}
+Func_GLOM_CAT <- tax_glom(Functional_genes_RA, taxrank = "Category")
+```
+```{r}
+Func_GLOM_CAT.df <- psmelt(Func_GLOM_CAT) #melt phyloseq object
+Func_GLOM_CAT.sum <- Func_GLOM_CAT.df %>%
+  dplyr::group_by(Forest, Category) %>%
+  dplyr::summarize(mean_abund = mean(Abundance, na.rm=FALSE)) 
+```
+```{r}
+Func_GLOM_CAT.sum$Category <- as.factor(Func_GLOM_CAT.sum$Category)
+levels(Func_GLOM_CAT.sum$Category)[9] <- "AOX degradation"
+
+colourCount = length(unique(Func_GLOM_CAT.sum$Category))
+mycolors = c(brewer.pal(name="Set3", n = 4), brewer.pal(name="Paired", n = 8), brewer.pal(name="Dark2", n = 8)) #set colour palette
+```
+
+```{r}
+Func_Glom_plot <- ggplot(Func_GLOM_CAT.sum, aes(fill=reorder(Category, +mean_abund), y=mean_abund, x=Forest)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme_bw(base_size = 15)+ 
+  theme(axis.text.y = element_text(colour = "black", size = 12),
+  axis.text.x = element_text(colour = "black", size = 12),
+  axis.title.x = element_text(size = 12),
+  legend.position = "right",
+  legend.text = element_text(size = 12),
+  legend.key.size = unit(0.6, "cm"),
+  legend.justification = "left",
+  legend.box.margin = margin(l = 1, unit = "cm"),
+  legend.title = element_text(size = 14))+
+  xlab("")+
+  ylab("Relative abundance (%)")+
+  scale_fill_manual(values = mycolors)+
+  geom_col(color = "black")+ 
+  guides(fill=guide_legend(title="Metabolic gene category", ncol = 1))+ 
+  scale_y_continuous(n.breaks = 10, limits = c(0, 100))
+Func_Glom_plot2 <- Func_Glom_plot + coord_flip() + scale_x_discrete(limits=rev)
+```
+#Combine plots
+```{r}
+gene_abundances_plot <- ggarrange(eggNOG_Cat_plot2, Func_Glom_plot2, CAZy_Glom_plot2, nrow = 3, ncol=1, legend = "right", align = "hv", labels = c("A)", "B)", "C)"))
+```
+```{r}
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/gene_abundances_plot.png', width = 7000, height = 6000, res = 500)
+gene_abundances_plot
+```
+
+##Sankey diagram of METABOLIC genes
+```{r edit metabolic dataframe for ggsankey format}
+METABOLIC_Sankey.ps <- tax_glom(Functional_genes_physeq, taxrank = "Func_abb")
+METABOLIC_Sankey.df <- psmelt(METABOLIC_Sankey.ps) #melt phyloseq object
+
+#export and edit in excel
+write.csv(METABOLIC_Sankey.df, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/METABOLIC_Sankey_df.csv")
+```
+```{r}
+METABOLIC_Sankey.df <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/METABOLIC_Sankey_df.csv")
+```
+
+```{r}
+DF_sankey  <- make_long(METABOLIC_Sankey.df, Category, Func_abb, value = Abundance)
+DF_sankey$node <- as.factor(DF_sankey$node)
+DF_sankey$next_node <- as.factor(DF_sankey$next_node)
+```
+```{r Plot the Sankey diagram using ggplot2 + ggsankey}
+sankey_plot_METABOLIC <- ggplot(DF_sankey, aes(x = x, 
+                    next_x = next_x, 
+                    node = fct_inorder(node), 
+                    next_node = next_node, 
+                    fill = factor(node), 
+                    label = node,
+                    value=value)) +
+  geom_sankey(flow.alpha = 0.7, node.color = "gray") +  # Add flow and nodes
+  geom_sankey_text(size = 4, color = "black") +  # Add text labels
+  theme_sankey(base_size = 20) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),  # Remove x-axis title
+        axis.text.x = element_blank(),   # Remove x-axis text
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(1, 1, 1, 1)) +  # Reduced margin
+  scale_x_discrete(expand = c(0.1, 0.1))   # Remove x-axis padding
+  #coord_cartesian(expand = FALSE)  # Crop extra space
+```
+```{r combine microtraits and metabolic plots}
+FG_sankey_plot <- readRDS("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/microTraits/sankey_plot.rds")
+```
+```{r}
+#library("gridExtra")
+#library("cowplot")
+# Arrange plots using arrangeGrob
+# returns a gtable (gt)
+gt <- arrangeGrob(FG_sankey_plot, sankey_plot_METABOLIC, # bar plot spaning two columns
+                  ncol = 2)
+# Add labels to the arranged plots
+p <- as_ggplot(gt) +                                # transform to a ggplot
+  draw_plot_label(label = c("A", "B"), size = 20,
+                  x = c(0.1, 0.6), y = c(0.9, 0.9)) # Add labels
+```
+```{r}
+png("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/sankeyPlots.png", width = 8000, height = 7000, res = 500)
+p
+```
+#export tax table for supplmentary materials
+```{r}
+taxTable_summary <- as.data.frame(tax_table(Functional_genes_GLOM))
+taxTable_summary$gene_ID <- rownames(taxTable_summary)
+write.csv(taxTable_summary, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/taxTable_summary.csv")
+```
+##struggling to visualise differeces in gene abundances - plot as dot plots to accompany differential abundance plots
+##category
+
+##function
+##gene level
+```{r}
+ancombc_gene_abundances <- as.data.frame(ancombc_gene$feature_table)
+ancombc_gene_abundances <- sqrt(ancombc_gene_abundances)
+Function <- as.data.frame(tax_table(Functional_genes_GLOM3)[,2])
+Category <- as.data.frame(tax_table(Functional_genes_GLOM3)[,1])
+Gene <- as.data.frame(rownames(ancombc_gene_abundances))
+ancombc_gene_abundances <- cbind(Category, Function, Gene, ancombc_gene_abundances)
+
+#melt dataframe
+ancombc_gene_abundances.m <- melt(ancombc_gene_abundances)
+
+##export and edit in excel
+#write.csv(ancombc_gene_abundances.m, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/ancombc_gene_abundances.csv")
+```
+##edited in excel to rename columns and add Forest type
+```{r}
+ancombc_gene_abundances.m <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/ancombc_gene_abundances.csv")
+ancombc_gene_abundances.m <- ancombc_gene_abundances.m %>% mutate_if(is.character, as.factor)
+```
+
+```{r split by category}
+ancombc_gene_abundances.sum <- ancombc_gene_abundances.m %>%
+  dplyr::group_by(Gene, Function, Category, Forest) %>%
+  dplyr::summarise(mean_abund= mean(value), SD= sd(value))
+ancombc_gene_abundances.sum$Forest <- factor(ancombc_gene_abundances.sum$Forest, levels = c("HM", "Puk", "GF", "WH", "La", "SD", "GG", "Ora", "KA"))
+levels(ancombc_gene_abundances.sum$Forest) <- c("Hirakimata", "Puketi", "Glenfern", "Windy Hill", "Laingholm", "Silverdale", "Gadgil", "Oratia", "Kaiaraara")
+ancombc_gene_abundances.split <- split(ancombc_gene_abundances.sum, ~Category)
+```
+#C degradation
+```{r}
+C_deg <- ggplot(ancombc_gene_abundances.split$`Carbon degradation`, aes(x=mean_abund, y=Gene, color=Forest)) +
+  geom_point(aes(colour=Forest),alpha=1, size=6) +
+  scale_colour_brewer(palette = "YlOrRd")+
+  theme_bw(base_size = 15)+
+  xlab("Normalised gene abundance (sqrt)")+
+  theme(axis.text.x = element_text(colour="black"),
+  axis.text.y = element_text(colour="black"),
+  axis.title.x = element_text(colour="black"),
+  axis.title.y = element_text(colour="black"),
+  legend.position = "right")+
+  geom_errorbar(aes(xmin=mean_abund-SD, xmax=mean_abund+SD), size=1, width=.2)+
+  ylab("")+
+  labs(colour="Forest")+
+  scale_y_discrete(limits=rev)+
+  facet_wrap(~Function, scales = "free", nrow = 4)
+```
+#N cycling genes
+```{r}
+N_cycling <- ggplot(ancombc_gene_abundances.split$`Nitrogen cycling`, aes(x=mean_abund, y=Gene, color=Forest)) +
+  geom_point(aes(colour=Forest),alpha=1, size=6) +
+  scale_colour_brewer(palette = "YlOrRd")+
+  theme_bw(base_size = 15)+
+  xlab("Normalised gene abundance (sqrt)")+
+  theme(axis.text.x = element_text(colour="black"),
+  axis.text.y = element_text(colour="black"),
+  axis.title.x = element_text(colour="black"),
+  axis.title.y = element_text(colour="black"),
+  legend.position = "right")+
+  geom_errorbar(aes(xmin=mean_abund-SD, xmax=mean_abund+SD), size=1, width=.2)+
+  ylab("")+
+  labs(colour="Forest")+
+  scale_y_discrete(limits=rev)+
+  facet_wrap(~Function, scales = "free", nrow = 4)
+```
+##C met genes
+```{r}
+C_metabolism <- ggplot(ancombc_gene_abundances.split$`Carbon metabolism`, aes(x=mean_abund, y=Gene, color=Forest)) +
+  geom_point(aes(colour=Forest),alpha=1, size=6) +
+  scale_colour_brewer(palette = "YlOrRd")+
+  theme_bw(base_size = 15)+
+  xlab("Normalised gene abundance (sqrt)")+
+  theme(axis.text.x = element_text(colour="black"),
+  axis.text.y = element_text(colour="black"),
+  axis.title.x = element_text(colour="black"),
+  axis.title.y = element_text(colour="black"),
+  legend.position = "right")+
+  geom_errorbar(aes(xmin=mean_abund-SD, xmax=mean_abund+SD), size=1, width=.2)+
+  ylab("")+
+  labs(colour="Forest")+
+  scale_y_discrete(limits=rev)+
+  facet_wrap(~Function, scales = "free", nrow = 4)
+```
+##C1 met genes
+```{r}
+C1_metabolism <- ggplot(ancombc_gene_abundances.split$`Methane metabolism`, aes(x=mean_abund, y=Gene, color=Forest)) +
+  geom_point(aes(colour=Forest),alpha=1, size=6) +
+  scale_colour_brewer(palette = "YlOrRd")+
+  theme_bw(base_size = 15)+
+  xlab("Normalised gene abundance (sqrt)")+
+  theme(axis.text.x = element_text(colour="black"),
+  axis.text.y = element_text(colour="black"),
+  axis.title.x = element_text(colour="black"),
+  axis.title.y = element_text(colour="black"),
+  legend.position = "right")+
+  geom_errorbar(aes(xmin=mean_abund-SD, xmax=mean_abund+SD), size=1, width=.2)+
+  ylab("")+
+  labs(colour="Forest")+
+  scale_y_discrete(limits=rev)+
+  facet_wrap(~Function, scales = "free", nrow = 4)
+```
+##Sulfur genes
+```{r}
+S_metabolism <- ggplot(ancombc_gene_abundances.split$`Sulfur metabolism`, aes(x=mean_abund, y=Gene, color=Forest)) +
+  geom_point(aes(colour=Forest),alpha=1, size=6) +
+  scale_colour_brewer(palette = "YlOrRd")+
+  theme_bw(base_size = 15)+
+  xlab("Normalised gene abundance (sqrt)")+
+  theme(axis.text.x = element_text(colour="black"),
+  axis.text.y = element_text(colour="black"),
+  axis.title.x = element_text(colour="black"),
+  axis.title.y = element_text(colour="black"),
+  legend.position = "right")+
+  geom_errorbar(aes(xmin=mean_abund-SD, xmax=mean_abund+SD), size=1, width=.2)+
+  ylab("")+
+  labs(colour="Forest")+
+  scale_y_discrete(limits=rev)+
+  facet_wrap(~Function, scales = "free", nrow = 4)
+```
+
+
+

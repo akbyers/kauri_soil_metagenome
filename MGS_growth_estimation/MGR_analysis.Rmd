@@ -1,0 +1,407 @@
+---
+title: "MGR_analysis"
+output: html_document
+date: "2024-12-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+setwd("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential")
+library(ggplot2)
+library(reshape2)
+library(ggstatsplot)
+library(dplyr)
+library(Rmisc)
+library(geomtextpath)
+library(RColorBrewer)
+library(multcompView)
+library(rcompanion)
+library(ggpubr)
+```
+```{r read in data}
+microbial_growth_potential <- read.csv("growth_potential.csv")
+microbial_growth_potential$Forest <- as.factor(microbial_growth_potential$Forest)
+```
+```{r}
+#change order of forests
+microbial_growth_potential$Forest <- factor(microbial_growth_potential$Forest, levels = c("Hirakimata", "Windy_Hill", "Glenfern", "Gadgil", "Kaiaraara", "Silverdale", "Laingholm", "Oratia", "Puketi"))
+levels(microbial_growth_potential$Forest) <- c("Hirakimata", "Windy Hill", "Glenfern", "Gadgil", "Kaiaraara", "Silverdale", "Laingholm", "Oratia", "Puketi")
+```
+##microbial alpha diversity has been added to the growth rate data
+```{r KW test for differences between forests}
+#maximum growth rate
+kruskal.test(microbial_growth_potential$d_reciprocal, microbial_growth_potential$Forest)
+MGR_wilcox <- pairwise.wilcox.test(microbial_growth_potential$d_reciprocal, microbial_growth_potential$Forest, p.adjust.method = "holm")
+#generate compact letter display
+MGR_wilcox.Matrix = fullPTable(MGR_wilcox$p.value) 
+multcompLetters(MGR_wilcox.Matrix)
+
+#average genome size
+kruskal.test(microbial_growth_potential$AGS_Mbp, microbial_growth_potential$Forest)
+AGS_wilcox <- pairwise.wilcox.test(microbial_growth_potential$AGS_Mbp, microbial_growth_potential$Forest, p.adjust.method = "holm")
+#generate compact letter display
+AGS_wilcox.Matrix = fullPTable(AGS_wilcox$p.value) 
+multcompLetters(AGS_wilcox.Matrix)
+
+#bacterial diversity
+kruskal.test(microbial_growth_potential$Shannon, microbial_growth_potential$Forest)
+Shannon_wilcox <- pairwise.wilcox.test(microbial_growth_potential$Shannon, microbial_growth_potential$Forest, p.adjust.method = "holm")
+#generate compact letter display
+Shannon_wilcox.Matrix = fullPTable(Shannon_wilcox$p.value) 
+multcompLetters(Shannon_wilcox.Matrix)
+```
+```{r plot differences between forests: format data}
+#melt dataframe
+microbial_growth_potential.m <- melt(microbial_growth_potential)
+#summarise data
+microbial_growth_potential.SE <- summarySE(microbial_growth_potential.m, measurevar = "value", groupvars =c("Forest", "variable"))
+
+#change order of forests
+microbial_growth_potential.SE$Forest <- factor(microbial_growth_potential.SE$Forest, levels = c("Hirakimata", "Windy_Hill", "Glenfern", "Gadgil", "Kaiaraara", "Silverdale", "Laingholm", "Oratia", "Puketi"))
+levels(microbial_growth_potential.SE$Forest) <- c("Hirakimata", "Windy Hill", "Glenfern", "Gadgil", "Kaiaraara", "Silverdale", "Laingholm", "Oratia", "Puketi")
+microbial_growth_potential.split <- split(microbial_growth_potential.SE, ~variable)
+```
+```{r plot maximum growth potential}
+mycolors = c(brewer.pal(name="Set1", n = 1), brewer.pal(name="Dark2", n = 8))
+MGP_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=d_reciprocal, group=Forest, color=Forest)) +
+  geom_boxplot(aes(fill=Forest), outliers = FALSE, color="black")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  theme_bw(base_size = 12)+
+  xlab(bquote(Maximum~Growth~Rate~(h^-1)))+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("")+
+  scale_fill_manual(values = mycolors)+
+  scale_x_continuous(n.breaks = 10, limits = c(0.15, 0.23))
+#add compact letter display
+MGP_plot2 <- MGP_plot + 
+  annotate("text", x=0.23, y=1, label="ab", size = 4, color="navy") + 
+  annotate("text", x=0.23, y=2, label="a", size = 4, color="navy") + 
+  annotate("text", x=0.23, y=3, label="a", size = 4, color="navy") + 
+  annotate("text", x=0.23, y=4, label="a", size = 4, color="navy") + 
+  annotate("text", x=0.23, y=5, label="c", size = 4, color="navy") + 
+  annotate("text", x=0.23, y=6, label="b", size = 4, color="navy") + 
+  annotate("text", x=0.23, y=7, label="ab", size = 4, color="navy") + 
+  annotate("text", x=0.23, y=8, label="ab", size = 4, color="navy") + 
+  annotate("text", x=0.23, y=9, label="ab", size = 4, color="navy")
+```
+```{r plot maximum growth potential}
+AGS_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=AGS_Mbp, group=Forest, color=Forest)) +
+  geom_boxplot(aes(fill=Forest), outliers = FALSE, color="black")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  theme_bw(base_size = 12)+
+  xlab("Average Genome Size (Mbp)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("")+
+  scale_fill_manual(values = mycolors)+
+  scale_x_continuous(n.breaks = 10, limits = c(1.7, 2.7))
+#add compact letter display
+AGS_plot2 <- AGS_plot + 
+  annotate("text", x=2.7, y=1, label="ab", size = 4, color="navy") + 
+  annotate("text", x=2.7, y=2, label="cd", size = 4, color="navy") + 
+  annotate("text", x=2.7, y=3, label="c", size = 4, color="navy") + 
+  annotate("text", x=2.7, y=4, label="cd", size = 4, color="navy") + 
+  annotate("text", x=2.7, y=5, label="ab", size = 4, color="navy") + 
+  annotate("text", x=2.7, y=6, label="a", size = 4, color="navy") + 
+  annotate("text", x=2.7, y=7, label="cd", size = 4, color="navy") + 
+  annotate("text", x=2.7, y=8, label="d", size = 4, color="navy") + 
+  annotate("text", x=2.7, y=9, label="b", size = 4, color="navy")
+```
+```{r bacterial diversity}
+Shannon_plot <- ggplot(data=microbial_growth_potential, aes(y=Forest, x=Shannon, group=Forest, color=Forest)) +
+  geom_boxplot(aes(fill=Forest), outliers = FALSE, color="black")+
+  stat_boxplot(geom = "errorbar", width = 0.5, color="black")+
+  theme_bw(base_size = 12)+
+  xlab("Shannon Diversity")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("")+
+  scale_fill_manual(values = mycolors)+
+  scale_x_continuous(n.breaks = 10, limits = c(4.4, 5.4))
+#add compact letter display
+Shannon_plot2 <- Shannon_plot + 
+  annotate("text", x=5.4, y=1, label="a", size = 4, color="navy") + 
+  annotate("text", x=5.4, y=2, label="b", size = 4, color="navy") + 
+  annotate("text", x=5.4, y=3, label="b", size = 4, color="navy") + 
+  annotate("text", x=5.4, y=4, label="b", size = 4, color="navy") + 
+  annotate("text", x=5.4, y=5, label="c", size = 4, color="navy") + 
+  annotate("text", x=5.4, y=6, label="d", size = 4, color="navy") + 
+  annotate("text", x=5.4, y=7, label="b", size = 4, color="navy") + 
+  annotate("text", x=5.4, y=8, label="b", size = 4, color="navy") + 
+  annotate("text", x=5.4, y=9, label="ac", size = 4, color="navy")
+```
+#Scatterplots
+```{r correlate AGS with soil C}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$AGS_Mbp, microbial_growth_potential$TC, method="spearman")
+#plot correlation
+AGS_TC_cor <- ggplot(microbial_growth_potential, aes(y=AGS_Mbp, x=TC, colour = Forest)) +
+  geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("Total C (%)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("Average Genome Size (Mbp)")+ 
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10, limits = c(1.8, 2.6))+
+  scale_x_continuous(n.breaks = 10, limits = c(0, 50))
+#add text to plot
+AGS_TC_cor2 <- AGS_TC_cor + 
+  annotate("text", x=40, y=2.5, label="rho = -0.51,\np < 0.001", size = 4, color="navy")
+```
+```{r correlate maximum growth rate with soil C}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$d_reciprocal, microbial_growth_potential$TC, method="spearman")
+MGR_TC_cor <- ggplot(microbial_growth_potential, aes(y=d_reciprocal, x=TC, colour = Forest)) + 
+  geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("Total C (%)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab(bquote(Maximum~Growth~Rate~(h^-1)))+
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+MGR_TC_cor2 <- MGR_TC_cor + 
+  annotate("text", x=35, y=0.163, label="rho = 0.12, p = 0.25", size = 4, color="navy")
+```
+
+```{r correlate bacterial diversity with soil C}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$Shannon, microbial_growth_potential$TC, method="spearman")
+Shannon_TC_cor <- ggplot(microbial_growth_potential, aes(y=Shannon, x=TC, colour = Forest)) + geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("Total C (%)")+
+  ylab("Shannon Diversity")+ 
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE) +
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+Shannon_TC_cor2 <- Shannon_TC_cor + 
+  annotate("text", x=35, y=5.25, label="rho = 0.21, p = 0.04", size = 4, color="navy")
+```
+##correlate with C:N ratio
+```{r correlate AGS with soil C:N}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$AGS_Mbp, microbial_growth_potential$CN, method="spearman")
+#plot correlation
+AGS_CN_cor <- ggplot(microbial_growth_potential, aes(y=AGS_Mbp, x=CN, colour = Forest)) +
+  geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("C:N ratio")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("Average Genome Size (Mbp)")+ 
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+AGS_CN_cor2 <- AGS_CN_cor + 
+  annotate("text", x=45, y=2.5, label="rho = -0.40,\np < 0.001", size = 4, color="navy")
+```
+```{r correlate MGR with soil C:N}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$d_reciprocal, microbial_growth_potential$CN, method="spearman")
+#plot correlation
+MGP_CN_cor <- ggplot(microbial_growth_potential, aes(y=d_reciprocal, x=CN, colour = Forest)) +
+  geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("C:N ratio")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab(bquote(Maximum~Growth~Rate~(h^-1)))+
+  scale_color_manual(values = mycolors)+
+  xlim(20,45)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+MGP_CN_cor2 <- MGP_CN_cor + 
+  annotate("text", x=40, y=0.163, label="rho = 0.23, p = 0.03", size = 4, color="navy")
+```
+```{r correlate Shannon diversity with soil C:N}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$Shannon, microbial_growth_potential$CN, method="spearman")
+#plot correlation
+Shannon_CN_cor <- ggplot(microbial_growth_potential, aes(y=Shannon, x=CN, colour = Forest)) + geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("C:N ratio")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("Shannon Diversity")+ 
+  scale_color_manual(values = mycolors)+
+  xlim(20,45)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+Shannon_CN_cor2 <- Shannon_CN_cor + 
+  annotate("text", x=35, y=5.25, label="rho = 0.13, p = 0.24", size = 4, color="navy")
+```
+
+#correlate with total N
+```{r correlate AGS with total N}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$AGS_Mbp, microbial_growth_potential$TN, method="spearman")
+#plot correlation
+AGS_TN_cor <- ggplot(microbial_growth_potential, aes(y=AGS_Mbp, x=TN, colour = Forest)) +
+  geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("Total N (%)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("Average Genome Size (Mbp)")+ 
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+AGS_TN_cor2 <- AGS_TN_cor + 
+  annotate("text", x=1.2, y=2.4, label="rho = -0.48,\np < 0.001", size = 4, color="navy")
+```
+```{r correlate MGR with total N}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$d_reciprocal, microbial_growth_potential$TN, method="spearman")
+#plot correlation
+MGP_TN_cor <- ggplot(microbial_growth_potential, aes(y=d_reciprocal, x=TN, colour = Forest)) +
+  geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("Total N (%)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab(bquote(Maximum~Growth~Rate~(h^-1)))+ 
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+MGP_TN_cor2 <- MGP_TN_cor + 
+  annotate("text", x=1, y=0.163, label="rho = 0.10, p = 0.35", size = 4, color="navy")
+```
+```{r correlate Shannon diversity with total N}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$Shannon, microbial_growth_potential$TN, method="spearman")
+#plot correlation
+Shannon_TN_cor <- ggplot(microbial_growth_potential, aes(y=Shannon, x=TN, colour = Forest)) + geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("Total N (%)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("Shannon Diversity")+ 
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+Shannon_TN_cor2 <- Shannon_TN_cor + 
+  annotate("text", x=1, y=5.25, label="rho = 0.19, p = 0.08", size = 4, color="navy")
+```
+```{r correlate Shannon diversity and AGS}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$Shannon, microbial_growth_potential$AGS_Mbp, method="spearman")
+#plot correlation
+Shannon_AGS_cor <- ggplot(microbial_growth_potential, aes(y=Shannon, x=AGS_Mbp, colour = Forest)) + geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("Average Genome Size (Mbp)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab("Shannon Diversity")+ 
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+Shannon_AGS_cor2 <- Shannon_AGS_cor + 
+  annotate("text", x=2.3, y=5.2, label="rho = -0.81, p < 0.001", size = 4, color="navy")
+```
+```{r correlate Shannon diversity and AGS}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$Shannon, microbial_growth_potential$d_reciprocal, method="spearman")
+#plot correlation
+Shannon_MGR_cor <- ggplot(microbial_growth_potential, aes(x=Shannon, y=d_reciprocal, colour = Forest)) + geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  ylab(bquote(Maximum~Growth~Rate~(h^-1)))+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  xlab("Shannon Diversity")+ 
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+Shannon_MGR_cor2 <- Shannon_MGR_cor + 
+  annotate("text", x=4.6, y=0.17, label="rho = -0.44, p < 0.001", size = 4, color="navy")
+```
+```{r correlate AGS and microbial growth rate}
+#test correlation using Spearman
+cor.test(microbial_growth_potential$d_reciprocal, microbial_growth_potential$AGS_Mbp, method="spearman")
+#plot correlation
+MGR_AGS_cor <- ggplot(microbial_growth_potential, aes(y=d_reciprocal, x=AGS_Mbp, colour = Forest)) + geom_point(aes(), size=3)+
+  theme_bw(base_size = 12)+
+  xlab("Average Genome Size (Mbp)")+
+  theme(axis.text.y = element_text(colour = "black"),
+  axis.text.x = element_text(colour = "black"))+
+  ylab(bquote(Maximum~Growth~Rate~(h^-1)))+ 
+  scale_color_manual(values = mycolors)+
+  geom_smooth(method=lm , color="black", fill="grey", se=TRUE)+
+  scale_y_continuous(n.breaks = 10)+
+  scale_x_continuous(n.breaks = 10)
+#add text to plot
+MGR_AGS_cor2 <- MGR_AGS_cor + 
+  annotate("text", x=2.3, y=0.17, label="rho = 0.40, p < 0.001", size = 4, color="navy")
+```
+```{r BIG plot!}
+#Plot A: Differences between groups
+plot_MEGA <- ggarrange(MGP_plot2, MGR_TC_cor2, MGP_TN_cor2, MGP_CN_cor2,
+                   AGS_plot2, AGS_TC_cor2, AGS_TN_cor2, AGS_CN_cor2,
+                   Shannon_plot2, Shannon_TC_cor2, Shannon_TN_cor2, Shannon_CN_cor2,
+                   common.legend = TRUE, legend = "none")
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/plot_MEGA.png', width = 6500, height = 4000, res = 400)
+plot_MEGA
+```
+
+```{r combine and export plots}
+#Plot A: Differences between groups
+plot1 <- ggarrange(MGP_plot2, AGS_plot2, Shannon_plot2, common.legend = TRUE, legend = "none")
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/max_growth_rate.png', width = 3000, height = 2500, res = 400)
+plot1
+
+#Plot B: AGS correlation with total C, total N, and C:N
+plot2 <- ggarrange(AGS_TC_cor2, AGS_TN_cor2, AGS_CN_cor2, common.legend = TRUE, legend = "none")
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/AGS_COR.png', width = 3000, height = 2500, res = 400)
+plot2
+
+#Plot C: Shannon correlation with total C, total N, and C:N
+plot3 <- ggarrange(Shannon_TC_cor2, Shannon_TN_cor2, Shannon_CN_cor2, common.legend = TRUE, legend = "none")
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/shannon_COR.png', width = 3000, height = 2500, res = 400)
+plot3
+
+#Plot D: MGS correlation with total C, total N, and C:N
+plot4 <- ggarrange(MGR_TC_cor2, MGP_TN_cor2, MGP_CN_cor2, common.legend = TRUE, legend = "none")
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/MGR_COR.png', width = 3000, height = 2500, res = 400)
+plot4
+
+#Plot E: AGS, Shannon, MGR correlation
+plot5 <- ggarrange(MGR_AGS_cor2, Shannon_MGR_cor2, Shannon_AGS_cor2, common.legend = TRUE, legend = "none")
+png('C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/all_growth_COR.png', width = 3000, height = 2500, res = 400)
+plot5
+```
+
+

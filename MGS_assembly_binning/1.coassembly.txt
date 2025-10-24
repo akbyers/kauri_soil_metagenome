@@ -1,0 +1,46 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      megahit_assembly
+#SBATCH --time          7-00:00:00
+#SBATCH --mem           500GB
+#SBATCH --cpus-per-task 20
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+#SBATCH --mail-user     alexa.byers@lincoln.ac.nz
+#SBATCH --mail-type     ALL
+
+#metagenome assembly using MEGAHIT
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/
+
+#Load modules
+module purge
+module load MEGAHIT/1.2.9-gimkl-2022a-Python-3.10.5
+
+##GADGIL
+megahit -1 raw_data_Aotea/concatenated_reads/GG_CONCAT_1.fastq -2 raw_data_Aotea/concatenated_reads/GG_CONCAT_2.fastq -o CO_ASSEMBLY/Assembly/Gadgil --presets meta-large -m 500000000000 -t 20 --continue
+
+##GLENFERN
+megahit -1 raw_data_Aotea/concatenated_reads/GF_CONCAT_1.fastq -2 raw_data_Aotea/concatenated_reads/GF_CONCAT_2.fastq -o CO_ASSEMBLY/Assembly/Glenfern --presets meta-large -m 500000000000 -t 20
+
+##HIRAKIMATA
+megahit -1 raw_data_Aotea/concatenated_reads/HM_CONCAT_1.fastq -2 raw_data_Aotea/concatenated_reads/HM_CONCAT_2.fastq -o CO_ASSEMBLY/Assembly/Hirakimata --presets meta-large -m 500000000000 -t 20 --continue
+
+##KAIARAARA
+megahit -1 raw_data_ALL/concatenated_reads/KA_CONCAT_1.fq -2 raw_data_ALL/concatenated_reads/KA_CONCAT_2.fq -o CO_ASSEMBLY/Assembly/Kaiaraara --presets meta-large -m 400000000000 -t 20 --continue
+
+##WINDY HILL
+megahit -1 raw_data_Aotea/concatenated_reads/WH_CONCAT_1.fastq -2 raw_data_Aotea/concatenated_reads/WH_CONCAT_2.fastq -o CO_ASSEMBLY/Assembly/Windy_Hill --presets meta-large -m 500000000000 -t 20
+
+##ORATIA
+#megahit -1 raw_data/concatenated_reads/Oratia_CONCAT_1.fastq -2 raw_data/concatenated_reads/Oratia_CONCAT_2.fastq -o CO_ASSEMBLY/Assembly/Oratia --presets meta-large -m 300000000000 -t $SLURM_CPUS_PER_TASK --continue
+
+##LAINGHOLM
+#megahit -1 raw_data/concatenated_reads/Laingholm_CONCAT_1.fastq -2 raw_data/concatenated_reads/Laingholm_CONCAT_2.fastq -o CO_ASSEMBLY/Assembly/Laingholm --presets meta-large -m 500000000000 -t $SLURM_CPUS_PER_TASK
+
+##PUKETI
+megahit -1 raw_data/concatenated_reads/Puketi_CONCAT_1.fastq -2 raw_data/concatenated_reads/Puketi_CONCAT_2.fastq -o CO_ASSEMBLY/Assembly/Puketi --presets meta-large -m 500000000000 -t $SLURM_CPUS_PER_TASK --continue
+
+##SILVERDALE
+megahit -1 raw_data/concatenated_reads/Silverdale_CONCAT_1.fastq -2 raw_data/concatenated_reads/Silverdale_CONCAT_2.fastq -o CO_ASSEMBLY/Assembly/Silverdale --presets meta-large -m 500000000000 -t $SLURM_CPUS_PER_TASK --continue
+

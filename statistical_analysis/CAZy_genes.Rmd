@@ -1,0 +1,324 @@
+---
+title: "CAZy genes"
+output: html_document
+date: "2025-02-01"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r load libraries}
+library(dplyr)
+library(phyloseq)
+library(ggplot2)
+library(reshape2)
+library(Rmisc)
+library(vegan)
+library(devtools)
+library(pairwiseAdonis)
+library(scales)
+library(ggpubr)
+library(ggordiplots)
+library(RColorBrewer)
+library(rcompanion)
+library(multcompView)
+library(ANCOMBC)
+library(tidyverse)
+library(DT)
+library(Hmisc)
+library(corrplot)
+library(ggcorrplot)
+#remotes::install_github("vmikk/metagMisc")
+library(metagMisc)
+```
+```{r load data}
+contig_functions_CAZy <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/dbCAN/dbCAN.csv")
+rownames(contig_functions_CAZy) <- contig_functions_CAZy$Gene.ID
+contig_functions_CAZy <- contig_functions_CAZy[,-1]
+contigs_CAZy <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Gene coverage/gene_coverage_CAZy_filtered.csv")
+sample_dat <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/sample_metadata.csv")
+```
+```{r format data for phyloseq}
+rownames(contigs_CAZy) <- contigs_CAZy$X
+rownames(sample_dat) <- sample_dat$Sample_ID
+```
+```{r convert to ps format}
+coverage_CAZy = otu_table(contigs_CAZy[,-1], taxa_are_rows = TRUE)
+functions_CAZy = tax_table(as.matrix(contig_functions_CAZy))
+taxa_names(functions_CAZy) <- rownames(contig_functions_CAZy)
+
+sample_dat = sample_data(sample_dat)
+CAZy_genes_physeq = phyloseq(coverage_CAZy, functions_CAZy, sample_dat)#10876 genes and 90 samples
+```
+```{r}
+#inspect phyloseq object
+head(rank_names(CAZy_genes_physeq))
+```
+```{r merge contigs by gene and KO number}
+CAZy_GLOM <- tax_glom(CAZy_genes_physeq, taxrank = "Family") #215 genes and 90 samples
+taxa_names(CAZy_GLOM) <- tax_table(CAZy_GLOM)[,2]
+saveRDS(CAZy_GLOM, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/CAZy_GLOM.rds")#export phyloseq files
+```
+##alpha diversity
+```{r calculate alpha diversity}
+CAZy_GLOM.r = transform_sample_counts(CAZy_GLOM, round) #round counts
+CAZy_GLOM.alpha = estimate_richness(CAZy_GLOM.r)
+#export alpha diversity
+write.csv(CAZy_GLOM.alpha, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/CAZy_alpha.csv")
+```
+##beta diversity
+```{r beta diversity analysis}
+cazy_bray <- phyloseq::distance(CAZy_GLOM, "bray")#using non-rounded counts
+#permanova tests in vegan
+adonis2(cazy_bray ~ sampleDat_all$Forest) 
+pairwise.adonis(cazy_bray, sampleDat_all$Forest, sim.function = "vegdist", sim.method = "bray", p.adjust.m = "holm", perm = 999) #pairwise adonis tests
+```
+```{r plotting NMDS}
+#edit names, change order of forests
+sample_data(CAZy_GLOM)$Forest <- factor(sample_data(CAZy_GLOM)$Forest, levels = c("Hirakimata", "Puketi", "Glenfern", "Windy_Hill", "Laingholm", "Silverdale", "Gadgil",  "Oratia", "Kaiaraara"))
+levels(sample_data(CAZy_GLOM)$Forest)[4] <- "Windy Hill"
+```
+```{r}
+cazyGenes.ord <- ordinate(CAZy_GLOM, "NMDS", "bray")
+```
+```{r}
+cazyGenes.ordPlot = plot_ordination(CAZy_GLOM, cazyGenes.ord, type="samples", color="Forest", title = "D) CAZy gene families") +
+geom_point(size=4)+
+geom_convexhull(alpha = 0.6, aes(fill = Forest))+
+theme_bw(base_size = 15)+    
+theme(axis.title = element_text(size = 12))+
+scale_color_brewer(palette = "YlOrRd")+
+scale_fill_brewer(palette = "YlOrRd")
+```
+
+##differential abundance analysis using ANCOM-BC2
+```{r set Hirakimata forest as reference group}
+CAZy_GLOM2 <- CAZy_GLOM
+levels(sample_data(CAZy_GLOM2)$Forest)
+colnames(tax_table(CAZy_GLOM2)) <- c("Phylum", "Class", "Order", "Family") #rename for ANCOM-BC2
+```
+##Abbreviate forest names for plotting
+```{r}
+levels(sample_data(CAZy_GLOM2)$Forest) <- c("HKM", "PUK", "GF", "WH", "LAING", "SILV", "GAD", "ORA", "KAI")
+```
+#filter to remove low abundance genes
+```{r}
+CAZy_GLOM3 = filter_taxa(CAZy_GLOM2, function(x) sum(x > 20) > (0.2*length(x)), TRUE)
+```
+```{r ANCOMBC of CAZy families}
+set.seed(71)
+ancombc_CAZy = ancombc2(data = CAZy_GLOM3,
+                  tax_level = "Class",
+                  fix_formula = "Forest", 
+                  p_adj_method = "holm", 
+                  prv_cut = 0, lib_cut = 0, s0_perc = 0.05, 
+                  pseudo = 0, pseudo_sens = FALSE,
+                  group = "Forest", struc_zero = FALSE, neg_lb = FALSE,
+                  alpha = 0.05, 
+                  global = TRUE, pairwise = TRUE,
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100))
+```
+##Plot differences in GENE abundances
+```{r}
+CAZy_pairwise <- ancombc_CAZy$res_pair
+#edit column names to remove Forest string
+names(CAZy_pairwise) = gsub(pattern = "_Forest", replacement = "_", x = names(CAZy_pairwise))
+names(CAZy_pairwise) = gsub(pattern = "_", replacement = "-", x = names(CAZy_pairwise))
+```
+```{r rename specific columns}
+# Create a vector of variable names from the given list
+colnames(CAZy_pairwise)[182:189] <- c("diff-PUK-HKM", "diff-GF-HKM", "diff-WH-HKM", "diff-LAING-HKM", "diff-SILV-HKM", "diff-GAD-HKM", "diff-ORA-HKM", "diff-KAI-HKM")
+colnames(CAZy_pairwise)[2:9] <- c("lfc-PUK-HKM", "lfc-GF-HKM", "lfc-WH-HKM", "lfc-LAING-HKM", "lfc-SILV-HKM", "lfc-GAD-HKM", "lfc-ORA-HKM", "lfc-KAI-HKM")
+```
+```{r #change insignificant p-values to zero}
+CAZy_pairwise2 <- CAZy_pairwise
+# Define a threshold for p-values
+p_threshold <- 0.05
+# Create sample matrices of p-values
+p_matrix <- as.data.frame(CAZy_pairwise[,146:181])
+# Apply threshold: Set values to zero where p-value > p_threshold
+CAZy_pairwise2[,2:37][p_matrix > p_threshold] <- 0
+print(CAZy_pairwise2)
+```
+```{r export results for supplementary materials}
+ancombc_CAZy_GLOBAL <- ancombc_CAZy$res_global
+ancombc_CAZy_RESULTS <- cbind(ancombc_CAZy_GLOBAL, CAZy_pairwise2[,1:37]) #combine with global test results
+write.csv(ancombc_CAZy_RESULTS, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/ancombc_CAZy_RESULTS.csv")
+```
+#filter genes containing all zero lfc values
+```{r}
+CAZy_pairwise_filtered <- CAZy_pairwise2[apply(CAZy_pairwise2[,2:37], 1, function(x) !all(x==0)),]
+```
+```{r}
+diff_vars <- colnames(CAZy_pairwise_filtered[,182:217])
+# Dynamically create the list of `lfc_*` variables
+lfc_vars <- gsub("diff-", "lfc-", diff_vars)
+
+# Step 1: First data frame (df_fig_pair1)
+df_fig_pair1 <- CAZy_pairwise_filtered %>%
+  #dplyr::filter(if_any(all_of(diff_vars), ~ . == 1)) %>% # Filter rows where any diff_var == 1
+  dplyr::mutate(across(all_of(diff_vars), ~ ifelse(. == 1, round(runif(1, -2, 2), 2), 0), 
+                       .names = "lfc-{.col}")) %>% # Create lfc_* columns
+  tidyr::pivot_longer(cols = all_of(lfc_vars), 
+                      names_to = "group", values_to = "value") %>%
+  dplyr::arrange(taxon)
+
+# Step 2: Recode group names and factor levels
+group_labels <- gsub("lfc-", "", lfc_vars) # Use original variable names as group labels
+df_fig_pair1$group <- dplyr::recode(df_fig_pair1$group, !!!setNames(group_labels, lfc_vars))
+df_fig_pair1$group <- factor(df_fig_pair1$group, levels = group_labels)
+```
+```{r}
+df_fig_CAZy <- dcast(df_fig_pair1[c(1,218:219)], taxon ~ group, value.var = "value")
+rownames(df_fig_CAZy) <- df_fig_CAZy$taxon
+```
+
+```{r}
+rg <- max(abs(as.matrix(df_fig_CAZy[,-1])))
+CAZy_heat_plot <- pheatmap(as.matrix(df_fig_CAZy[,-1]), 
+                      color = colorRampPalette(c("darkblue", "white", "darkred"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_distance_cols = 'euclidean',
+                      clustering_distance_rows = 'euclidean',
+                      clustering_method = 'ward.D',
+                      treeheight_row = 40,
+                      treeheight_col = 40,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 12,          # row label font size
+                      fontsize_col = 12,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Log fold change values of CAZy genes between kauri forests", 
+                      fontsize = 14,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_PW_CAZy.png",
+                      width = 12,
+                      height = 16) # a title for our heatmap
+```
+
+##Plot differences in GENE abundances
+```{r}
+CAZy_pairwise_category <- ancombc_CAZy2$res_pair
+#edit column names to remove Forest string
+names(CAZy_pairwise_category) = gsub(pattern = "_Forest", replacement = "_", x = names(CAZy_pairwise_category))
+names(CAZy_pairwise_category) = gsub(pattern = "_", replacement = "-", x = names(CAZy_pairwise_category))
+```
+```{r rename specific columns}
+# Create a vector of variable names from the given list
+colnames(CAZy_pairwise_category)[182:189] <- c("diff-WH-HKM",   "diff-GLF-HKM",  "diff-GDG-HKM",  "diff-KAI-HKM",  "diff-ORA-HKM",  "diff-SLD-HKM",  "diff-LANG-HKM", "diff-PUK-HKM")
+colnames(CAZy_pairwise_category)[2:9] <- c("lfc-WH-HKM",   "lfc-GLF-HKM",  "lfc-GDG-HKM",  "lfc-KAI-HKM",  "lfc-ORA-HKM",  "lfc-SLD-HKM",  "lfc-LANG-HKM", "lfc-PUK-HKM")
+```
+```{r #change insignificant p-values to zero}
+CAZy_pairwise_category2 <- CAZy_pairwise_category
+# Define a threshold for p-values
+p_threshold <- 0.05
+# Create sample matrices of p-values
+p_matrix <- as.data.frame(CAZy_pairwise_category2[,146:181])
+# Apply threshold: Set values to zero where p-value > p_threshold
+CAZy_pairwise_category2[,2:37][p_matrix > p_threshold] <- 0
+print(CAZy_pairwise_category2)
+
+#export dataframe
+write.csv(CAZy_pairwise_category2, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/Results/CAZy_pairwise_ANCOM2.csv")
+```
+```{r editing names}
+CAZy_pairwise_category2$taxon <- factor(CAZy_pairwise_category2$taxon, levels = c("Auxiliary Activities", "Carbohydrate Binding Module", "Carbohydrate Esterase", "Glycoside Hydrolase", "GlycosylTransferase", "Polysaccharide Lyase"))
+levels(CAZy_pairwise_category2$taxon) <- c("Auxiliary Activities", "Carbohydrate Binding Modules", "Carbohydrate Esterases", "Glycoside Hydrolases", "GlycosylTransferases", "Polysaccharide Lyases")
+```
+
+```{r}
+diff_vars <- colnames(CAZy_pairwise_category2[,182:217])
+# Dynamically create the list of `lfc_*` variables
+lfc_vars <- gsub("diff-", "lfc-", diff_vars)
+
+# Step 1: First data frame (df_fig_pair1)
+df_fig_pair1 <- CAZy_pairwise_category2 %>%
+  #dplyr::filter(if_any(all_of(diff_vars), ~ . == 1)) %>% # Filter rows where any diff_var == 1
+  dplyr::mutate(across(all_of(diff_vars), ~ ifelse(. == 1, round(runif(1, -2, 2), 2), 0), 
+                       .names = "lfc-{.col}")) %>% # Create lfc_* columns
+  tidyr::pivot_longer(cols = all_of(lfc_vars), 
+                      names_to = "group", values_to = "value") %>%
+  dplyr::arrange(taxon)
+
+# Step 2: Recode group names and factor levels
+group_labels <- gsub("lfc-", "", lfc_vars) # Use original variable names as group labels
+df_fig_pair1$group <- dplyr::recode(df_fig_pair1$group, !!!setNames(group_labels, lfc_vars))
+df_fig_pair1$group <- factor(df_fig_pair1$group, levels = group_labels)
+```
+```{r}
+df_fig_CAZy2 <- dcast(df_fig_pair1[c(1,218:219)], taxon ~ group, value.var = "value")
+rownames(df_fig_CAZy2) <- df_fig_CAZy2$taxon
+```
+
+```{r}
+rg <- max(abs(as.matrix(df_fig_CAZy2[,-1])))
+CAZy_heat_plot2 <- pheatmap(as.matrix(df_fig_CAZy2[,-1]), 
+                      color = colorRampPalette(c("blue", "white", "red"))(50), # choose a colour scale for your data
+                      cluster_rows = T, cluster_cols = T, # set to FALSE if you want to remove the dendograms
+                      clustering_distance_cols = 'euclidean',
+                      clustering_distance_rows = 'euclidean',
+                      clustering_method = 'ward.D',
+                      treeheight_row = 40,
+                      treeheight_col = 40,
+                      border_color = "black",
+                      annotation_names_row = F, 
+                      annotation_names_col = F,
+                      breaks = seq(-rg, rg, length.out = 50),
+                      fontsize_row = 12,          # row label font size
+                      fontsize_col = 12,          # column label font size 
+                      angle_col = 90, # sample names at an angle
+                      show_colnames = T, show_rownames = T, # displaying column and row names
+                      main = "Pairwise differences in CAZy enzyme classes", 
+                      fontsize = 14,
+                      filename= "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Manuscript/Figures/Heatmap_PW_CAZy2.png",
+                      width = 12,
+                      height = 6) # a title for our heatmap
+```
+
+##abundances of cazy gene classes
+```{r convert to relative abundance}
+CAZy_genes_RA = transform_sample_counts(CAZy_genes_physeq, function(x) x / sum(x) *100)
+```
+```{r}
+CAZy_GLOM_EC <- tax_glom(CAZy_genes_RA, taxrank = "Enzyme_Class") #6 classes and 90 samples
+#set forest order
+sample_data(CAZy_GLOM_EC)$Forest <- factor(sample_data(CAZy_GLOM_EC)$Forest, levels = c("Hirakimata", "Puketi", "Glenfern", "Windy_Hill", "Laingholm", "Silverdale", "Gadgil",  "Oratia", "Kaiaraara"))
+levels(sample_data(CAZy_GLOM_EC)$Forest)[4] <- "Windy Hill"
+```
+```{r}
+CAZy_Glom.df <- psmelt(CAZy_GLOM_EC) #melt phyloseq object
+CAZy_Glom.sum <- CAZy_Glom.df %>%
+  dplyr::group_by(Forest, Enzyme_Class) %>%
+  dplyr::summarize(mean_abund = mean(Abundance, na.rm=FALSE)) 
+```
+```{r}
+CAZy_Glom_plot <- ggplot(CAZy_Glom.sum, aes(fill=reorder(Enzyme_Class, +mean_abund), y=mean_abund, x=Forest)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme_bw(base_size = 15)+ 
+  theme(axis.text.y = element_text(colour = "black", size = 12),
+  axis.text.x = element_text(colour = "black", size = 12),
+  axis.title.x = element_text(size = 12),
+  legend.position = "right",
+  legend.text = element_text(size = 12),
+  legend.key.size = unit(0.6, "cm"),
+  legend.justification = "left",
+  legend.box.margin = margin(l = 1, unit = "cm"),
+  legend.title = element_text(size = 14))+
+  xlab("")+
+  ylab("Relative abundance (%)")+
+  geom_col(color = "black")+ 
+  guides(fill=guide_legend(title="CAZy enzyme class", ncol = 1))+ 
+  scale_y_continuous(n.breaks = 10, limits = c(0, 100))
+CAZy_Glom_plot2 <- CAZy_Glom_plot + coord_flip() + scale_x_discrete(limits=rev)
+```
+
+

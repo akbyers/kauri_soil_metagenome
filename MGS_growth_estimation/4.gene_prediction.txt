@@ -1,0 +1,216 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      gene_prediction
+#SBATCH --time          2-00:00:00
+#SBATCH --mem           5GB
+#SBATCH --cpus-per-task 5
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+#SBATCH --mail-user     alexa.byers@lincoln.ac.nz
+#SBATCH --mail-type     ALL
+
+#gene prediction using prodigal
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/CO_ASSEMBLY/MicrobeCensus
+#mkdir gene_prediction
+
+#load modules
+#module purge
+#module load prodigal/2.6.3-GCCcore-7.4.0
+
+#Windy Hill
+#prodigal -i metagenome_assembly/WH_1/final.contigs.fa -d gene_prediction/WH_1_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_2/final.contigs.fa -d gene_prediction/WH_2_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_3/final.contigs.fa -d gene_prediction/WH_3_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_4/final.contigs.fa -d gene_prediction/WH_4_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_5/final.contigs.fa -d gene_prediction/WH_5_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_6/final.contigs.fa -d gene_prediction/WH_6_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_7/final.contigs.fa -d gene_prediction/WH_7_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_8/final.contigs.fa -d gene_prediction/WH_8_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_9/final.contigs.fa -d gene_prediction/WH_9_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/WH_10/final.contigs.fa -d gene_prediction/WH_10_prodigal_genes.fna -p meta
+
+#Hirakimata
+#prodigal -i metagenome_assembly/HM_1/final.contigs.fa -d gene_prediction/HM_1_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_2/final.contigs.fa -d gene_prediction/HM_2_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_3/final.contigs.fa -d gene_prediction/HM_3_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_4/final.contigs.fa -d gene_prediction/HM_4_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_5/final.contigs.fa -d gene_prediction/HM_5_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_6/final.contigs.fa -d gene_prediction/HM_6_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_7/final.contigs.fa -d gene_prediction/HM_7_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_8/final.contigs.fa -d gene_prediction/HM_8_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_9/final.contigs.fa -d gene_prediction/HM_9_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/HM_10/final.contigs.fa -d gene_prediction/HM_10_prodigal_genes.fna -p meta
+
+#Glenfern
+#prodigal -i metagenome_assembly/GF_1/final.contigs.fa -d gene_prediction/GF_1_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_2/final.contigs.fa -d gene_prediction/GF_2_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_3/final.contigs.fa -d gene_prediction/GF_3_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_4/final.contigs.fa -d gene_prediction/GF_4_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_5/final.contigs.fa -d gene_prediction/GF_5_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_6/final.contigs.fa -d gene_prediction/GF_6_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_7/final.contigs.fa -d gene_prediction/GF_7_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_8/final.contigs.fa -d gene_prediction/GF_8_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_9/final.contigs.fa -d gene_prediction/GF_9_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GF_10/final.contigs.fa -d gene_prediction/GF_10_prodigal_genes.fna -p meta
+
+#Gadgil
+#prodigal -i metagenome_assembly/GG_1/final.contigs.fa -d gene_prediction/GG_1_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_2/final.contigs.fa -d gene_prediction/GG_2_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_3/final.contigs.fa -d gene_prediction/GG_3_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_4/final.contigs.fa -d gene_prediction/GG_4_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_5/final.contigs.fa -d gene_prediction/GG_5_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_6/final.contigs.fa -d gene_prediction/GG_6_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_7/final.contigs.fa -d gene_prediction/GG_7_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_8/final.contigs.fa -d gene_prediction/GG_8_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_9/final.contigs.fa -d gene_prediction/GG_9_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/GG_10/final.contigs.fa -d gene_prediction/GG_10_prodigal_genes.fna -p meta
+
+#Oratia
+#prodigal -i metagenome_assembly/Ora_10/final.contigs.fa -d gene_prediction/Ora_10_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Ora_9/final.contigs.fa -d gene_prediction/Ora_9_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Ora_8/final.contigs.fa -d gene_prediction/Ora_8_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Ora_14/final.contigs.fa -d gene_prediction/Ora_14_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Ora_13/final.contigs.fa -d gene_prediction/Ora_13_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Ora_12/final.contigs.fa -d gene_prediction/Ora_12_prodigal_genes.fna -p meta
+
+#Laingholm
+#prodigal -i metagenome_assembly/La_10/final.contigs.fa -d gene_prediction/La_10_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_11/final.contigs.fa -d gene_prediction/La_11_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_1/final.contigs.fa -d gene_prediction/La_1_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_13/final.contigs.fa -d gene_prediction/La_13_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_15/final.contigs.fa -d gene_prediction/La_15_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_3/final.contigs.fa -d gene_prediction/La_3_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_4/final.contigs.fa -d gene_prediction/La_4_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_6/final.contigs.fa -d gene_prediction/La_6_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_8/final.contigs.fa -d gene_prediction/La_8_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_9/final.contigs.fa -d gene_prediction/La_9_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/La_2/final.contigs.fa -d gene_prediction/La_2_prodigal_genes.fna -p meta
+
+#Silverdale
+#prodigal -i metagenome_assembly/SD_1/final.contigs.fa -d gene_prediction/SD_1_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_11/final.contigs.fa -d gene_prediction/SD_11_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_12/final.contigs.fa -d gene_prediction/SD_12_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_13/final.contigs.fa -d gene_prediction/SD_13_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_14/final.contigs.fa -d gene_prediction/SD_14_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_15/final.contigs.fa -d gene_prediction/SD_15_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_2/final.contigs.fa -d gene_prediction/SD_2_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_3/final.contigs.fa -d gene_prediction/SD_3_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_4/final.contigs.fa -d gene_prediction/SD_4_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_5/final.contigs.fa -d gene_prediction/SD_5_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_6/final.contigs.fa -d gene_prediction/SD_6_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/SD_9/final.contigs.fa -d gene_prediction/SD_9_prodigal_genes.fna -p meta
+
+#Puketi
+#prodigal -i metagenome_assembly/Puk10/final.contigs.fa -d gene_prediction/Puk_10_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk11/final.contigs.fa -d gene_prediction/Puk_11_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk12/final.contigs.fa -d gene_prediction/Puk_12_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk15/final.contigs.fa -d gene_prediction/Puk_15_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk19/final.contigs.fa -d gene_prediction/Puk_19_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk21/final.contigs.fa -d gene_prediction/Puk_21_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk22/final.contigs.fa -d gene_prediction/Puk_22_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk5/final.contigs.fa -d gene_prediction/Puk_5_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk6/final.contigs.fa -d gene_prediction/Puk_6_prodigal_genes.fna -p meta
+#prodigal -i metagenome_assembly/Puk9/final.contigs.fa -d gene_prediction/Puk_9_prodigal_genes.fna -p meta
+
+#identify ribosomal protein genes
+module purge
+module load BLAST/2.16.0-GCC-12.3.0
+
+#makeblastdb -in ribosomal_proteins_db.fasta -dbtype nucl
+
+#Windy Hill
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_1_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_1_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_2_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_2_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_3_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_3_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_4_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_4_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_5_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_5_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_6_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_6_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_7_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_7_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_8_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_8_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_9_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_9_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/WH_10_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/WH_10_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+
+#Glenfern
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_1_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_1_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_2_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_2_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_3_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_3_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_4_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_4_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_5_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_5_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_6_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_6_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_7_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_7_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_8_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_8_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_9_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_9_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GF_10_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GF_10_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+
+#Gadgil
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_1_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_1_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_2_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_2_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_3_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_3_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_4_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_4_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_5_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_5_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_6_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_6_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_7_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_7_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_8_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_8_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_9_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_9_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/GG_10_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/GG_10_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+
+#Laingholm
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_10_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_10_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_11_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_11_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_1_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_1_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_13_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_13_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_15_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_15_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_3_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_3_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_4_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_4_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+#blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_5_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_5_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_6_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_6_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_8_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_8_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_9_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_9_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/La_2_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/La_2_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+
+#Oratia
+#blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Ora_10_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Ora_10_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Ora_9_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Ora_9_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Ora_8_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Ora_8_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Ora_14_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Ora_14_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Ora_13_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Ora_13_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Ora_12_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Ora_12_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+
+#Silverdale
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_1_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_1_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_11_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_11_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_12_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_12_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_13_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_13_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_14_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_14_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_15_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_15_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_2_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_2_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_3_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_3_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_4_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_4_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_5_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_5_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_6_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_6_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/SD_9_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/SD_9_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+
+#Puketi
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_10_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_10_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_11_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_11_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_12_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_12_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_15_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_15_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_19_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_19_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_21_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_21_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_22_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_22_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_5_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_5_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_6_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_6_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/Puk_9_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/Puk_9_ribosomal_protiens.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+
+#Hirakimata
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_1_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_1_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_2_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_2_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_3_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_3_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_4_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_4_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_5_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_5_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_6_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_6_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_7_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_7_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_8_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_8_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_9_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_9_ribosomal_proteins.blast -num_threads 5 -max_hsps 1 -max_target_seqs 1
+blastn -db ribosomal_proteins_db.fasta -query gene_prediction/HM_10_prodigal_genes.fna -outfmt 6 -evalue 1e-15 -out gene_prediction/HM_10_ribosomal_proteins.blast -num_threads 1 -max_hsps 1 -max_target_seqs 1

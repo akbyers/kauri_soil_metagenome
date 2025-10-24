@@ -1,0 +1,106 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      kraken
+#SBATCH --time          2-00:00:00
+#SBATCH --mem           50GB
+#SBATCH --cpus-per-task 5
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+#SBATCH --mail-user     alexa.byers@lincoln.ac.nz
+#SBATCH --mail-type     ALL
+
+# STEP 1. Run kraken to assign taxonomy to metagenomic reads
+
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/raw_data
+
+#Load modules
+module purge
+module load Kraken2/2.1.3-GCC-11.3.0
+
+#Classify reads with kraken2
+
+##LAINGHOLM
+kraken2 --use-names --paired La_1_1.fastq La_1_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_1_report.kraken --output k2_outputs/La_1.kraken --report-zero-counts 
+kraken2 --use-names --paired La_10_1.fastq La_10_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_10_report.kraken --output k2_outputs/La_10.kraken --report-zero-counts
+kraken2 --use-names --paired La_11_1.fastq La_11_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_11_report.kraken --output k2_outputs/La_11.kraken --report-zero-counts
+kraken2 --use-names --paired La_13_1.fastq La_13_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_13_report.kraken --output k2_outputs/La_13.kraken --report-zero-counts
+kraken2 --use-names --paired La_15_1.fastq La_15_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_15_report.kraken --output k2_outputs/La_15.kraken --report-zero-counts
+kraken2 --use-names --paired La_2_1.fastq La_2_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_2_report.kraken --output k2_outputs/La_2.kraken --report-zero-counts
+kraken2 --use-names --paired La_3_1.fastq La_3_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_3_report.kraken --output k2_outputs/La_3.kraken --report-zero-counts
+kraken2 --use-names --paired La_4_1.fastq La_4_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_4_report.kraken --output k2_outputs/La_4.kraken --report-zero-counts
+kraken2 --use-names --paired La_5_1.fastq La_5_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_5_report.kraken --output k2_outputs/La_5.kraken --report-zero-counts
+kraken2 --use-names --paired La_6_1.fastq La_6_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_6_report.kraken --output k2_outputs/La_6.kraken --report-zero-counts
+kraken2 --use-names --paired La_8_1.fastq La_8_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_8_report.kraken --output k2_outputs/La_8.kraken --report-zero-counts
+kraken2 --use-names --paired La_9_1.fastq La_9_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/La_9_report.kraken --output k2_outputs/La_9.kraken --report-zero-counts
+
+##ORATIA
+kraken2 --use-names --paired Ora_8_1.fastq Ora_8_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Ora_8_report.kraken --output k2_outputs/Ora_8.kraken --report-zero-counts
+kraken2 --use-names --paired Ora_9_1.fastq Ora_9_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Ora_9_report.kraken --output k2_outputs/Ora_9.kraken --report-zero-counts 
+kraken2 --use-names --paired Ora_10_1.fastq Ora_10_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Ora_10_report.kraken --output k2_outputs/Ora_10.kraken --report-zero-counts 
+kraken2 --use-names --paired Ora_12_1.fastq Ora_12_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Ora_12_report.kraken --output k2_outputs/Ora_12.kraken --report-zero-counts 
+kraken2 --use-names --paired Ora_13_1.fastq Ora_13_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Ora_13_report.kraken --output k2_outputs/Ora_13.kraken --report-zero-counts 
+kraken2 --use-names --paired Ora_14_1.fastq Ora_14_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Ora_14_report.kraken --output k2_outputs/Ora_14.kraken --report-zero-counts 
+
+##PUKETI
+kraken2 --use-names --paired Puk10_1.fastq Puk10_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk10_report.kraken --output k2_outputs/Puk10.kraken --report-zero-counts
+kraken2 --use-names --paired Puk11_1.fastq Puk11_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk11_report.kraken --output k2_outputs/Puk11.kraken --report-zero-counts
+kraken2 --use-names --paired Puk12_1.fastq Puk12_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk12_report.kraken --output k2_outputs/Puk12.kraken --report-zero-counts
+kraken2 --use-names --paired Puk15_1.fastq Puk15_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk15_report.kraken --output k2_outputs/Puk15.kraken --report-zero-counts
+kraken2 --use-names --paired Puk19_1.fastq Puk19_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk19_report.kraken --output k2_outputs/Puk19.kraken --report-zero-counts
+kraken2 --use-names --paired Puk21_1.fastq Puk21_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk21_report.kraken --output k2_outputs/Puk21.kraken --report-zero-counts
+kraken2 --use-names --paired Puk22_1.fastq Puk22_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk22_report.kraken --output k2_outputs/Puk22.kraken --report-zero-counts
+kraken2 --use-names --paired Puk5_1.fastq Puk5_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk5_report.kraken --output k2_outputs/Puk5.kraken --report-zero-counts
+kraken2 --use-names --paired Puk6_1.fastq Puk6_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk6_report.kraken --output k2_outputs/Puk6.kraken --report-zero-counts
+kraken2 --use-names --paired Puk9_1.fastq Puk9_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/Puk9_report.kraken --output k2_outputs/Puk9.kraken --report-zero-counts
+
+##SILVERDALE
+kraken2 --use-names --paired SD_1_1.fastq SD_1_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_1_report.kraken --output k2_outputs/SD_1.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_11_1.fastq SD_11_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_11_report.kraken --output k2_outputs/SD_11.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_12_1.fastq SD_12_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_12_report.kraken --output k2_outputs/SD_12.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_13_1.fastq SD_13_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_13_report.kraken --output k2_outputs/SD_13.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_14_1.fastq SD_14_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_14_report.kraken --output k2_outputs/SD_14.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_15_1.fastq SD_15_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_15_report.kraken --output k2_outputs/SD_15.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_2_1.fastq SD_2_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_2_report.kraken --output k2_outputs/SD_2.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_3_1.fastq SD_3_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_3_report.kraken --output k2_outputs/SD_3.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_4_1.fastq SD_4_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_4_report.kraken --output k2_outputs/SD_4.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_5_1.fastq SD_5_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_5_report.kraken --output k2_outputs/SD_5.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_6_1.fastq SD_6_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_6_report.kraken --output k2_outputs/SD_6.kraken --report-zero-counts 
+kraken2 --use-names --paired SD_9_1.fastq SD_9_2.fastq --threads 5 --db /opt/nesi/db/Kraken2/standard-2018-09 --report k2_reports/SD_9_report.kraken --output k2_outputs/SD_9.kraken --report-zero-counts 
+
+#Generating combined kraken reports
+#python combine_kreports.py -r La_*_report.kraken -o La_combined_report.kraken --only-combined --no-headers
+#python combine_kreports.py -r Puk*_report.kraken -o Puk_combined_report.kraken --only-combined --no-headers
+#python combine_kreports.py -r Ora_*_report.kraken -o Ora_combined_report.kraken --only-combined --no-headers
+#python combine_kreports.py -r SD_*_report.kraken -o SD_combined_report.kraken --only-combined --no-headers
+#combine all and split by sample
+#python combine_kreports.py -r *_report.kraken -o combined_report.kraken
+#python combine_kreports.py -r *_report.kraken -o combined_report_noHeaders.kraken --only-combined --no-headers
+
+##convert to krona
+#python kreport2krona.py -r La_combined_report.kraken -o La_combined.krona
+#python kreport2krona.py -r Puk_combined_report.kraken -o Puk_combined.krona
+#python kreport2krona.py -r Ora_combined_report.kraken -o Ora_combined.krona
+#python kreport2krona.py -r SD_combined_report.kraken -o SD_combined.krona
+#python kreport2krona.py -r combined_report_noHeaders.krakenn -o all_samples_combined.krona
+
+#make krona chart
+#module purge
+#module load KronaTools/2.8.1-GCC-11.3.0-Perl-5.34.1
+
+#ktImportText La_combined.krona -o La_combined_krona.html
+#ktImportText Puk_combined.krona -o Puk_combined_krona.html
+#ktImportText Ora_combined.krona -o Ora_combined_krona.html
+#ktImportText SD_combined.krona -o SD_combined_krona.html
+#ktImportText all_samples_combined.krona -o all_samples_combined_krona.html
+
+##convert to mpa format
+#for i in *_report.kraken
+#do
+ # filename=$(basename "$i")
+ # fname="${filename%_report.kraken}"
+ # python kreport2mpa.py -r $i -o ${fname}_mpa.txt --display-header --no-intermediate-ranks --percentages --read-count
+#done
+
+##combine mpa reports
+#python combine_mpa -i MPA_reports/*mpa.txt -o MPA_reports/MPA_ALL.txt

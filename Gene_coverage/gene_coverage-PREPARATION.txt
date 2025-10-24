@@ -1,0 +1,168 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      dedupe
+#SBATCH --time          01:00:00
+#SBATCH --mem           10GB
+#SBATCH --cpus-per-task 5
+#SBATCH --error         %x_%A_%a.err
+#SBATCH --output        %x_%A_%a.out
+
+#Working directory
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/CO_ASSEMBLY/deReplicated_FINAL_BINS
+mkdir dedupe_contigs
+
+# Load modules
+module purge
+module load BBMap/39.01-GCC-11.3.0
+
+#Step 1: Rename contigs to append site ID (remove duplicate headers)
+cp deRep_output/dereplicated_genomes/*.fa dedupe_contigs/
+cd dedupe_contigs
+
+#Glenfern
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_maxbin.028_sub.fa > GF_maxbin.028_sub_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_maxbin.031_sub.fa > GF_maxbin.031_sub_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_maxbin.048_sub.fa > GF_maxbin.048_sub_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_maxbin.111.fa > GF_maxbin.111_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_maxbin.245.fa > GF_maxbin.245_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.108.fa > GF_metabat.108_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.144.fa > GF_metabat.144_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.178.fa > GF_metabat.178_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.189.fa > GF_metabat.189_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.19.fa > GF_metabat.19_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.23.fa > GF_metabat.23_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.41.fa > GF_metabat.41_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.43.fa > GF_metabat.43_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.66.fa > GF_metabat.66_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.6.fa > GF_metabat.6_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.73.fa > GF_metabat.73_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.74.fa > GF_metabat.74_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.77.fa > GF_metabat.77_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.78.fa > GF_metabat.78_edit.fa
+
+#Gadgil
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GF_metabat.84.fa > GF_metabat.84_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_maxbin.008.fa > GG_maxbin.008_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_maxbin.015.fa > GG_maxbin.015_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_maxbin.160.fa > GG_maxbin.160_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.102.fa > GG_metabat.102_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.127.fa > GG_metabat.127_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.137.fa > GG_metabat.137_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.146.fa > GG_metabat.146_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.167.fa > GG_metabat.167_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.24.fa > GG_metabat.24_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.31.fa > GG_metabat.31_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.4.fa > GG_metabat.4_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.64.fa > GG_metabat.64_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.71.fa > GG_metabat.71_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.7.fa > GG_metabat.7_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' GG_metabat.95.fa > GG_metabat.95_edit.fa
+
+#Hirakimata
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' HM_bin.126.fa > HM_bin.126_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' HM_bin.144.fa > HM_bin.144_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' HM_bin.166.fa > HM_bin.166_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' HM_bin.1.fa > HM_bin.1_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' HM_bin.23_sub.fa > HM_bin.23_sub_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' HM_bin.4.fa > HM_bin.4_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' HM_bin.76.fa > HM_bin.76_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' HM_bin.9.fa > HM_bin.9_edit.fa
+
+#Kaiaraara
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' KA_maxbin.070.fa > KA_maxbin.070_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' KA_metabat.11.fa > KA_metabat.11_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' KA_metabat.1.fa > KA_metabat.1_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' KA_metabat.20.fa > KA_metabat.20_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' KA_metabat.25.fa > KA_metabat.25_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' KA_metabat.44.fa > KA_metabat.44_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' KA_metabat.55_sub.fa > KA_metabat.55_sub_edit.fa
+
+#Laingholm
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_maxbin.003.fa > La_maxbin.003_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_maxbin.020.fa > La_maxbin.020_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.120.fa > La_metabat.120_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.131.fa > La_metabat.131_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.137.fa > La_metabat.137_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.140.fa > La_metabat.140_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.24.fa > La_metabat.24_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.46.fa > La_metabat.46_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.50.fa > La_metabat.50_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.62.fa > La_metabat.62_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.78.fa > La_metabat.78_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.80.fa > La_metabat.80_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.84.fa > La_metabat.84_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' La_metabat.89.fa > La_metabat.89_edit.fa
+
+#Oratia
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_maxbin_bin.22.fa > Ora_maxbin_bin.22_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_maxbin_bin.2.fa > Ora_maxbin_bin.2_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_maxbin_bin.35.fa > Ora_maxbin_bin.35_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_metabat_bin.24.fa > Ora_metabat_bin.24_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_metabat_bin.29.fa > Ora_metabat_bin.29_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_metabat_bin.50.fa > Ora_metabat_bin.50_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_metabat_bin.60.fa > Ora_metabat_bin.60_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_metabat_bin.66.fa > Ora_metabat_bin.66_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Ora_metabat_bin.77.fa > Ora_metabat_bin.77_edit.fa
+
+#Puketi
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_maxbin.002.fa > Puk_maxbin.002_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_maxbin.034.fa > Puk_maxbin.034_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_maxbin.050_sub.fa > Puk_maxbin.050_sub_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_maxbin.063_sub.fa > Puk_maxbin.063_sub_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_maxbin.174.fa > Puk_maxbin.174_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.113.fa > Puk_metabat.113_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.115.fa > Puk_metabat.115_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.127.fa > Puk_metabat.127_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.130.fa > Puk_metabat.130_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.152.fa > Puk_metabat.152_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.159.fa > Puk_metabat.159_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.166.fa > Puk_metabat.166_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.197.fa > Puk_metabat.197_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.198.fa > Puk_metabat.198_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.199.fa > Puk_metabat.199_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.200.fa > Puk_metabat.200_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.29.fa > Puk_metabat.29_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.32.fa > Puk_metabat.32_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.42.fa > Puk_metabat.42_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.78.fa > Puk_metabat.78_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' Puk_metabat.94.fa > Puk_metabat.94_edit.fa
+
+#Silverdale
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.124.fa > SD_bin.124_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.154.fa > SD_bin.154_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.166.fa > SD_bin.166_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.27.fa > SD_bin.27_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.29.fa > SD_bin.29_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.33.fa > SD_bin.33_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.36.fa > SD_bin.36_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.71.fa > SD_bin.71_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_bin.91.fa > SD_bin.91_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_maxbin.021.fa > SD_maxbin.021_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_maxbin.025.fa > SD_maxbin.025_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' SD_maxbin.051.fa > SD_maxbin.051_edit.fa
+
+#Windy Hill
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_maxbin.033_sub.fa > WH_maxbin.033_sub_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.110.fa > WH_metabat.110_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.111.fa > WH_metabat.111_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.116.fa > WH_metabat.116_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.118.fa > WH_metabat.118_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.140.fa > WH_metabat.140_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.149.fa > WH_metabat.149_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.3.fa > WH_metabat.3_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.41.fa > WH_metabat.41_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.42.fa > WH_metabat.42_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.58.fa > WH_metabat.58_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.62.fa > WH_metabat.62_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.69.fa > WH_metabat.69_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.76.fa > WH_metabat.76_edit.fa
+awk '/>/{sub(">","&"FILENAME"_");sub(/\.fa/,x)}1' WH_metabat.78_sub.fa > WH_metabat.78_sub_edit.fa
+
+
+#Step 2: Concat MAGS
+cat deReplicated_FINAL_BINS/dedupe_contigs/*_edit.fa > deReplicated_FINAL_BINS/dedupe_contigs/concatenated_MAGs_edited.fasta
+
+#Step 3: remove duplicate reads using dedupe.sh script
+dedupe.sh in=deReplicated_FINAL_BINS/dedupe_contigs/concatenated_MAGs_edited.fasta out=deReplicated_FINAL_BINS/dedupe_contigs/DEDUPE_MAGs_edited.fasta
+

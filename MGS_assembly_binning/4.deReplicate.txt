@@ -1,0 +1,32 @@
+#dereplicating MAGs from multiple co-assemblies using dRep
+
+#Preparation: Pull the bins from all assemblies together into a single folder
+cd [change to your working directory]
+mkdir deReplicated_FINAL_BINS
+
+# Step 1: first run checkm2 to assess genome completeness and contamination
+module purge
+module load CheckM2/1.0.1-Miniconda3
+
+checkm2 predict -t 12 -x .fa --input deReplicated_FINAL_BINS --output-directory deReplicated_FINAL_BINS/CheckM2
+
+
+# Step 2: produce genome info file for dRep 
+echo "genome,completeness,contamination" > dRep.genomeInfo
+cut -f1,2,3 CheckM2/quality_report.tsv 
+  | sed 's/\t/.fa\t/' \
+  | sed 's/\t/,/g' \
+  | tail -n+2 >> dRep.genomeInfo
+
+# Step 3: run dRep
+module purge
+module load drep/3.4.2-gimkl-2022a-Python-3.10.5
+
+dRep dereplicate --genomeInfo deReplicated_FINAL_BINS/dRep.genomeInfo \
+                 -g deReplicated_FINAL_BINS/*.fa \
+                 -p 2 \
+                 -comp 50 \
+                 -con 10 \
+                 deReplicated_FINAL_BINS/deRep_output/ #location of final bins that you will use for genome annotation
+
+

@@ -1,0 +1,31 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      microbe_census
+#SBATCH --time          1-00:00:00
+#SBATCH --mem           20GB
+#SBATCH --cpus-per-task 12
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+#SBATCH --mail-user     alexa.byers@lincoln.ac.nz
+#SBATCH --mail-type     ALL
+
+#Quantify average genome size using MicrobeCensus
+# Load modules
+module purge 
+module load Python/3.11.6-foss-2023a
+source /nesi/project/lincoln03750/software/MicrobeCensus-SourceApp/bin/activate
+
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/
+
+#Kaiaraara
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_1_filt_1.fq,raw_data_ALL/kraken_filtered/KA_1_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_1.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_2_filt_1.fq,raw_data_ALL/kraken_filtered/KA_2_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_2.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_3_filt_1.fq,raw_data_ALL/kraken_filtered/KA_3_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_3.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_4_filt_1.fq,raw_data_ALL/kraken_filtered/KA_4_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_4.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_5_filt_1.fq,raw_data_ALL/kraken_filtered/KA_5_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_5.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_6_filt_1.fq,raw_data_ALL/kraken_filtered/KA_6_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_6.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_7_filt_1.fq,raw_data_ALL/kraken_filtered/KA_7_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_7.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_8_filt_1.fq,raw_data_ALL/kraken_filtered/KA_8_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_8.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_9_filt_1.fq,raw_data_ALL/kraken_filtered/KA_9_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_9.txt
+run_microbe_census.py -t 12 -n 2000000 raw_data_ALL/kraken_filtered/KA_10_filt_1.fq,raw_data_ALL/kraken_filtered/KA_10_filt_2.fq CO_ASSEMBLY/MicrobeCensus/output_files/KA_10.txt

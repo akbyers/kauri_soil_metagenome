@@ -1,0 +1,391 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      gene_coverage
+#SBATCH --time          2-00:00:00
+#SBATCH --mem           30GB
+#SBATCH --cpus-per-task 20
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+#SBATCH --mail-user     alexa.byers@lincoln.ac.nz
+#SBATCH --mail-type     ALL
+
+#calculate gene coverage
+#cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/CO_ASSEMBLY/MicrobeCensus/gene_prediction/
+#mkdir gene_coverage
+
+#load modules
+#module purge
+module load BWA/0.7.18-GCC-12.3.0 SAMtools/1.19-GCC-12.3.0
+
+#Index prodigal files
+#Windy Hill
+#bwa index WH_1_prodigal_genes.fna
+#bwa index WH_2_prodigal_genes.fna
+#bwa index WH_3_prodigal_genes.fna
+#bwa index WH_4_prodigal_genes.fna
+#bwa index WH_5_prodigal_genes.fna
+#bwa index WH_6_prodigal_genes.fna
+#bwa index WH_7_prodigal_genes.fna
+#bwa index WH_8_prodigal_genes.fna
+#bwa index WH_9_prodigal_genes.fna
+#bwa index WH_10_prodigal_genes.fna
+
+#Glenfern
+#bwa index GF_1_prodigal_genes.fna
+#bwa index GF_2_prodigal_genes.fna
+#bwa index GF_3_prodigal_genes.fna
+#bwa index GF_4_prodigal_genes.fna
+#bwa index GF_5_prodigal_genes.fna
+#bwa index GF_6_prodigal_genes.fna
+#bwa index GF_7_prodigal_genes.fna
+#bwa index GF_8_prodigal_genes.fna
+#bwa index GF_9_prodigal_genes.fna
+#bwa index GF_10_prodigal_genes.fna
+
+#Gadgil
+#bwa index GG_1_prodigal_genes.fna
+#bwa index GG_2_prodigal_genes.fna
+#bwa index GG_3_prodigal_genes.fna
+#bwa index GG_4_prodigal_genes.fna
+#bwa index GG_5_prodigal_genes.fna
+#bwa index GG_6_prodigal_genes.fna
+#bwa index GG_7_prodigal_genes.fna
+#bwa index GG_8_prodigal_genes.fna
+#bwa index GG_9_prodigal_genes.fna
+#bwa index GG_10_prodigal_genes.fna
+
+#Oratia
+#bwa index Ora_10_prodigal_genes.fna
+#bwa index Ora_9_prodigal_genes.fna
+#bwa index Ora_8_prodigal_genes.fna
+#bwa index Ora_14_prodigal_genes.fna
+#bwa index Ora_13_prodigal_genes.fna
+#bwa index Ora_12_prodigal_genes.fna
+
+#Laingholm
+#bwa index La_2_prodigal_genes.fna
+#bwa index La_10_prodigal_genes.fna
+#bwa index La_11_prodigal_genes.fna
+#bwa index La_1_prodigal_genes.fna
+#bwa index La_13_prodigal_genes.fna
+#bwa index La_15_prodigal_genes.fna
+#bwa index La_3_prodigal_genes.fna
+#bwa index La_4_prodigal_genes.fna
+#bwa index La_6_prodigal_genes.fna
+#bwa index La_8_prodigal_genes.fna
+#bwa index La_9_prodigal_genes.fna
+
+#Silverdale
+#bwa index SD_1_prodigal_genes.fna
+#bwa index SD_11_prodigal_genes.fna
+#bwa index SD_12_prodigal_genes.fna
+#bwa index SD_13_prodigal_genes.fna
+#bwa index SD_14_prodigal_genes.fna
+#bwa index SD_15_prodigal_genes.fna
+#bwa index SD_2_prodigal_genes.fna
+#bwa index SD_3_prodigal_genes.fna
+#bwa index SD_4_prodigal_genes.fna
+#bwa index SD_5_prodigal_genes.fna
+#bwa index SD_6_prodigal_genes.fna
+#bwa index SD_9_prodigal_genes.fna
+
+#Puketi
+#bwa index Puk_10_prodigal_genes.fna
+#bwa index Puk_11_prodigal_genes.fna
+#bwa index Puk_12_prodigal_genes.fna
+#bwa index Puk_15_prodigal_genes.fna
+#bwa index Puk_19_prodigal_genes.fna
+#bwa index Puk_21_prodigal_genes.fna
+#bwa index Puk_22_prodigal_genes.fna
+#bwa index Puk_5_prodigal_genes.fna
+#bwa index Puk_6_prodigal_genes.fna
+#bwa index Puk_9_prodigal_genes.fna
+
+#Hirakimata
+#bwa index HM_1_prodigal_genes.fna
+#bwa index HM_2_prodigal_genes.fna
+#bwa index HM_3_prodigal_genes.fna
+#bwa index HM_4_prodigal_genes.fna
+#bwa index HM_5_prodigal_genes.fna
+#bwa index HM_6_prodigal_genes.fna
+#bwa index HM_7_prodigal_genes.fna
+#bwa index HM_8_prodigal_genes.fna
+#bwa index HM_9_prodigal_genes.fna
+#bwa index HM_10_prodigal_genes.fna
+
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/
+
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_1_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_1_filt_1.fq raw_data_Aotea/kraken_filtered/WH_1_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_1_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_2_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_2_filt_1.fq raw_data_Aotea/kraken_filtered/WH_2_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_2_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_3_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_3_filt_1.fq raw_data_Aotea/kraken_filtered/WH_3_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_3_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_4_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_4_filt_1.fq raw_data_Aotea/kraken_filtered/WH_4_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_4_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_5_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_5_filt_1.fq raw_data_Aotea/kraken_filtered/WH_5_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_5_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_6_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_6_filt_1.fq raw_data_Aotea/kraken_filtered/WH_6_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_6_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_7_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_7_filt_1.fq raw_data_Aotea/kraken_filtered/WH_7_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_7_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_8_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_8_filt_1.fq raw_data_Aotea/kraken_filtered/WH_8_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_8_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_9_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_9_filt_1.fq raw_data_Aotea/kraken_filtered/WH_9_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_9_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/WH_10_prodigal_genes.fna raw_data_Aotea/kraken_filtered/WH_10_filt_1.fq raw_data_Aotea/kraken_filtered/WH_10_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/WH_10_gene_coverages.sam
+
+#Hirakimata
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_1_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_1_filt_1.fq raw_data_Aotea/kraken_filtered/HM_1_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_1_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_2_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_2_filt_1.fq raw_data_Aotea/kraken_filtered/HM_2_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_2_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_3_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_3_filt_1.fq raw_data_Aotea/kraken_filtered/HM_3_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_3_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_4_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_4_filt_1.fq raw_data_Aotea/kraken_filtered/HM_4_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_4_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_5_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_5_filt_1.fq raw_data_Aotea/kraken_filtered/HM_5_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_5_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_6_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_6_filt_1.fq raw_data_Aotea/kraken_filtered/HM_6_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_6_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_7_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_7_filt_1.fq raw_data_Aotea/kraken_filtered/HM_7_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_7_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_8_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_8_filt_1.fq raw_data_Aotea/kraken_filtered/HM_8_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_8_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_9_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_9_filt_1.fq raw_data_Aotea/kraken_filtered/HM_9_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_9_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/HM_10_prodigal_genes.fna raw_data_Aotea/kraken_filtered/HM_10_filt_1.fq raw_data_Aotea/kraken_filtered/HM_10_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/HM_10_gene_coverages.sam
+
+#Glenfern
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_1_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_1_filt_1.fq raw_data_Aotea/kraken_filtered/GF_1_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_1_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_2_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_2_filt_1.fq raw_data_Aotea/kraken_filtered/GF_2_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_2_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_3_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_3_filt_1.fq raw_data_Aotea/kraken_filtered/GF_3_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_3_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_4_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_4_filt_1.fq raw_data_Aotea/kraken_filtered/GF_4_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_4_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_5_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_5_filt_1.fq raw_data_Aotea/kraken_filtered/GF_5_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_5_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_6_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_6_filt_1.fq raw_data_Aotea/kraken_filtered/GF_6_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_6_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_7_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_7_filt_1.fq raw_data_Aotea/kraken_filtered/GF_7_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_7_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_8_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_8_filt_1.fq raw_data_Aotea/kraken_filtered/GF_8_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_8_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_9_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_9_filt_1.fq raw_data_Aotea/kraken_filtered/GF_9_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_9_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GF_10_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GF_10_filt_1.fq raw_data_Aotea/kraken_filtered/GF_10_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GF_10_gene_coverages.sam
+
+#Gadgil
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_1_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_1_filt_1.fq raw_data_Aotea/kraken_filtered/GG_1_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_1_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_2_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_2_filt_1.fq raw_data_Aotea/kraken_filtered/GG_2_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_2_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_3_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_3_filt_1.fq raw_data_Aotea/kraken_filtered/GG_3_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_3_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_4_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_4_filt_1.fq raw_data_Aotea/kraken_filtered/GG_4_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_4_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_5_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_5_filt_1.fq raw_data_Aotea/kraken_filtered/GG_5_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_5_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_6_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_6_filt_1.fq raw_data_Aotea/kraken_filtered/GG_6_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_6_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_7_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_7_filt_1.fq raw_data_Aotea/kraken_filtered/GG_7_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_7_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_8_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_8_filt_1.fq raw_data_Aotea/kraken_filtered/GG_8_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_8_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_9_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_9_filt_1.fq raw_data_Aotea/kraken_filtered/GG_9_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_9_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/GG_10_prodigal_genes.fna raw_data_Aotea/kraken_filtered/GG_10_filt_1.fq raw_data_Aotea/kraken_filtered/GG_10_filt_2.fq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/GG_10_gene_coverages.sam
+
+#Oratia
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Ora_10_prodigal_genes.fna raw_data/kraken_filtered/Ora_10_filt_1.fastq raw_data/kraken_filtered/Ora_10_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Ora_10_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Ora_9_prodigal_genes.fna raw_data/kraken_filtered/Ora_9_filt_1.fastq raw_data/kraken_filtered/Ora_9_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Ora_9_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Ora_8_prodigal_genes.fna raw_data/kraken_filtered/Ora_8_filt_1.fastq raw_data/kraken_filtered/Ora_8_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Ora_8_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Ora_14_prodigal_genes.fna raw_data/kraken_filtered/Ora_14_filt_1.fastq raw_data/kraken_filtered/Ora_14_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Ora_14_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Ora_13_prodigal_genes.fna raw_data/kraken_filtered/Ora_13_filt_1.fastq raw_data/kraken_filtered/Ora_13_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Ora_13_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Ora_12_prodigal_genes.fna raw_data/kraken_filtered/Ora_12_filt_1.fastq raw_data/kraken_filtered/Ora_12_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Ora_12_gene_coverages.sam
+
+#Laingholm
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_2_prodigal_genes.fna raw_data/kraken_filtered/La_2_filt_1.fastq raw_data/kraken_filtered/La_2_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_2_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_10_prodigal_genes.fna raw_data/kraken_filtered/La_10_filt_1.fastq raw_data/kraken_filtered/La_10_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_10_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_11_prodigal_genes.fna raw_data/kraken_filtered/La_11_filt_1.fastq raw_data/kraken_filtered/La_11_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_11_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_1_prodigal_genes.fna raw_data/kraken_filtered/La_1_filt_1.fastq raw_data/kraken_filtered/La_1_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_1_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_13_prodigal_genes.fna raw_data/kraken_filtered/La_13_filt_1.fastq raw_data/kraken_filtered/La_13_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_13_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_15_prodigal_genes.fna raw_data/kraken_filtered/La_15_filt_1.fastq raw_data/kraken_filtered/La_15_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_15_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_3_prodigal_genes.fna raw_data/kraken_filtered/La_3_filt_1.fastq raw_data/kraken_filtered/La_3_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_3_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_4_prodigal_genes.fna raw_data/kraken_filtered/La_4_filt_1.fastq raw_data/kraken_filtered/La_4_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_4_gene_coverages.sam
+#bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_5_prodigal_genes.fna raw_data/kraken_filtered/La_5_filt_1.fastq raw_data/kraken_filtered/La_5_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_5_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_6_prodigal_genes.fna raw_data/kraken_filtered/La_6_filt_1.fastq raw_data/kraken_filtered/La_6_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_6_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_8_prodigal_genes.fna raw_data/kraken_filtered/La_8_filt_1.fastq raw_data/kraken_filtered/La_8_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_8_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/La_9_prodigal_genes.fna raw_data/kraken_filtered/La_9_filt_1.fastq raw_data/kraken_filtered/La_9_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/La_9_gene_coverages.sam
+
+#Silverdale
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_1_prodigal_genes.fna raw_data/kraken_filtered/SD_1_filt_1.fastq raw_data/kraken_filtered/SD_1_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_1_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_11_prodigal_genes.fna raw_data/kraken_filtered/SD_11_filt_1.fastq raw_data/kraken_filtered/SD_11_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_11_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_12_prodigal_genes.fna raw_data/kraken_filtered/SD_12_filt_1.fastq raw_data/kraken_filtered/SD_12_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_12_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_13_prodigal_genes.fna raw_data/kraken_filtered/SD_13_filt_1.fastq raw_data/kraken_filtered/SD_13_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_13_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_14_prodigal_genes.fna raw_data/kraken_filtered/SD_14_filt_1.fastq raw_data/kraken_filtered/SD_14_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_14_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_15_prodigal_genes.fna raw_data/kraken_filtered/SD_15_filt_1.fastq raw_data/kraken_filtered/SD_15_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_15_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_2_prodigal_genes.fna raw_data/kraken_filtered/SD_2_filt_1.fastq raw_data/kraken_filtered/SD_2_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_2_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_3_prodigal_genes.fna raw_data/kraken_filtered/SD_3_filt_1.fastq raw_data/kraken_filtered/SD_3_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_3_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_4_prodigal_genes.fna raw_data/kraken_filtered/SD_4_filt_1.fastq raw_data/kraken_filtered/SD_4_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_4_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_5_prodigal_genes.fna raw_data/kraken_filtered/SD_5_filt_1.fastq raw_data/kraken_filtered/SD_5_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_5_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_6_prodigal_genes.fna raw_data/kraken_filtered/SD_6_filt_1.fastq raw_data/kraken_filtered/SD_6_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_6_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/SD_9_prodigal_genes.fna raw_data/kraken_filtered/SD_9_filt_1.fastq raw_data/kraken_filtered/SD_9_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/SD_9_gene_coverages.sam
+
+#Puketi
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_10_prodigal_genes.fna raw_data/kraken_filtered/Puk10_filt_1.fastq raw_data/kraken_filtered/Puk10_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk10_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_11_prodigal_genes.fna raw_data/kraken_filtered/Puk11_filt_1.fastq raw_data/kraken_filtered/Puk11_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk11_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_12_prodigal_genes.fna raw_data/kraken_filtered/Puk12_filt_1.fastq raw_data/kraken_filtered/Puk12_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk12_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_15_prodigal_genes.fna raw_data/kraken_filtered/Puk15_filt_1.fastq raw_data/kraken_filtered/Puk15_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk15_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_19_prodigal_genes.fna raw_data/kraken_filtered/Puk19_filt_1.fastq raw_data/kraken_filtered/Puk19_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk19_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_21_prodigal_genes.fna raw_data/kraken_filtered/Puk21_filt_1.fastq raw_data/kraken_filtered/Puk21_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk21_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_22_prodigal_genes.fna raw_data/kraken_filtered/Puk22_filt_1.fastq raw_data/kraken_filtered/Puk22_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk22_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_5_prodigal_genes.fna raw_data/kraken_filtered/Puk5_filt_1.fastq raw_data/kraken_filtered/Puk5_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk5_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_6_prodigal_genes.fna raw_data/kraken_filtered/Puk6_filt_1.fastq raw_data/kraken_filtered/Puk6_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk6_gene_coverages.sam
+bwa mem -t 20 CO_ASSEMBLY/MicrobeCensus/gene_prediction/Puk_9_prodigal_genes.fna raw_data/kraken_filtered/Puk9_filt_1.fastq raw_data/kraken_filtered/Puk9_filt_2.fastq > CO_ASSEMBLY/MicrobeCensus/gene_coverage/Puk9_gene_coverages.sam
+
+#convert sam files
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/CO_ASSEMBLY/MicrobeCensus/gene_coverage/ 
+
+#Windy Hill
+samtools sort -@ 20 WH_1_gene_coverages.sam -o WH_1_gene_coverages.bam
+samtools coverage WH_1_gene_coverages.bam WH_1_gene_coverage.txt
+samtools sort -@ 20 WH_2_gene_coverages.sam -o WH_2_gene_coverages.bam
+samtools coverage WH_2_gene_coverages.bam -o WH_2_gene_coverage.txt
+samtools sort -@ 20 WH_3_gene_coverages.sam -o WH_3_gene_coverages.bam
+samtools coverage WH_3_gene_coverages.bam -o WH_3_gene_coverage.txt
+samtools sort -@ 20 WH_4_gene_coverages.sam -o WH_4_gene_coverages.bam
+samtools coverage WH_4_gene_coverages.bam -o WH_4_gene_coverage.txt
+samtools sort -@ 20 WH_5_gene_coverages.sam -o WH_5_gene_coverages.bam
+samtools coverage WH_5_gene_coverages.bam -o WH_5_gene_coverage.txt
+samtools sort -@ 20 WH_6_gene_coverages.sam -o WH_6_gene_coverages.bam
+samtools coverage WH_6_gene_coverages.bam -o WH_6_gene_coverage.txt
+samtools sort -@ 20 WH_7_gene_coverages.sam -o WH_7_gene_coverages.bam
+samtools coverage WH_7_gene_coverages.bam -o WH_7_gene_coverage.txt
+samtools sort -@ 20 WH_8_gene_coverages.sam -o WH_8_gene_coverages.bam
+samtools coverage WH_8_gene_coverages.bam -o WH_8_gene_coverage.txt
+samtools sort -@ 20 WH_9_gene_coverages.sam -o WH_9_gene_coverages.bam
+samtools coverage WH_9_gene_coverages.bam -o WH_9_gene_coverage.txt
+samtools sort -@ 20 WH_10_gene_coverages.sam -o WH_10_gene_coverages.bam
+samtools coverage WH_10_gene_coverages.bam -o WH_10_gene_coverage.txt
+
+#Hirakimata
+samtools sort -@ 20 HM_1_gene_coverages.sam -o HM_1_gene_coverages.bam
+samtools coverage HM_1_gene_coverages.bam -o HM_1_gene_coverage.txt
+samtools sort -@ 20 HM_2_gene_coverages.sam -o HM_2_gene_coverages.bam
+samtools coverage HM_2_gene_coverages.bam -o HM_2_gene_coverage.txt
+samtools sort -@ 20 HM_3_gene_coverages.sam -o HM_3_gene_coverages.bam
+samtools coverage HM_3_gene_coverages.bam -o HM_3_gene_coverage.txt
+samtools sort -@ 20 HM_4_gene_coverages.sam -o HM_4_gene_coverages.bam
+samtools coverage HM_4_gene_coverages.bam -o HM_4_gene_coverage.txt
+samtools sort -@ 20 HM_5_gene_coverages.sam -o HM_5_gene_coverages.bam
+samtools coverage HM_5_gene_coverages.bam -o HM_5_gene_coverage.txt
+samtools sort -@ 20 HM_6_gene_coverages.sam -o HM_6_gene_coverages.bam
+samtools coverage HM_6_gene_coverages.bam -o HM_6_gene_coverage.txt
+samtools sort -@ 20 HM_7_gene_coverages.sam -o HM_7_gene_coverages.bam
+samtools coverage HM_7_gene_coverages.bam -o HM_7_gene_coverage.txt
+samtools sort -@ 20 HM_8_gene_coverages.sam -o HM_8_gene_coverages.bam
+samtools coverage HM_8_gene_coverages.bam -o HM_8_gene_coverage.txt
+samtools sort -@ 20 HM_9_gene_coverages.sam -o HM_9_gene_coverages.bam
+samtools coverage HM_9_gene_coverages.bam -o HM_9_gene_coverage.txt
+samtools sort -@ 20 HM_10_gene_coverages.sam -o HM_10_gene_coverages.bam
+samtools coverage HM_10_gene_coverages.bam -o HM_10_gene_coverage.txt
+
+#Glenfern
+samtools sort -@ 20 GF_1_gene_coverages.sam -o GF_1_gene_coverages.bam
+samtools coverage GF_1_gene_coverages.bam -o GF_1_gene_coverage.txt
+samtools sort -@ 20 GF_2_gene_coverages.sam -o GF_2_gene_coverages.bam
+samtools coverage GF_2_gene_coverages.bam -o GF_2_gene_coverage.txt
+samtools sort -@ 20 GF_3_gene_coverages.sam -o GF_3_gene_coverages.bam
+samtools coverage GF_3_gene_coverages.bam -o GF_3_gene_coverage.txt
+samtools sort -@ 20 GF_4_gene_coverages.sam -o GF_4_gene_coverages.bam
+samtools coverage GF_4_gene_coverages.bam -o GF_4_gene_coverage.txt
+samtools sort -@ 20 GF_5_gene_coverages.sam -o GF_5_gene_coverages.bam
+samtools coverage GF_5_gene_coverages.bam -o GF_5_gene_coverage.txt
+samtools sort -@ 20 GF_6_gene_coverages.sam -o GF_6_gene_coverages.bam
+samtools coverage GF_6_gene_coverages.bam -o GF_6_gene_coverage.txt
+samtools sort -@ 20 GF_7_gene_coverages.sam -o GF_7_gene_coverages.bam
+samtools coverage GF_7_gene_coverages.bam -o GF_7_gene_coverage.txt
+samtools sort -@ 20 GF_8_gene_coverages.sam -o GF_8_gene_coverages.bam
+samtools coverage GF_8_gene_coverages.bam -o GF_8_gene_coverage.txt
+samtools sort -@ 20 GF_9_gene_coverages.sam -o GF_9_gene_coverages.bam
+samtools coverage GF_9_gene_coverages.bam -o GF_9_gene_coverage.txt
+samtools sort -@ 20 GF_10_gene_coverages.sam -o GF_10_gene_coverages.bam
+samtools coverage GF_10_gene_coverages.bam -o GF_10_gene_coverage.txt
+
+#Gadgil
+samtools sort -@ 20 GG_1_gene_coverages.sam -o GG_1_gene_coverages.bam
+samtools coverage GG_1_gene_coverages.bam -o GG_1_gene_coverage.txt
+samtools sort -@ 20 GG_2_gene_coverages.sam -o GG_2_gene_coverages.bam
+samtools coverage GG_2_gene_coverages.bam -o GG_2_gene_coverage.txt
+samtools sort -@ 20 GG_3_gene_coverages.sam -o GG_3_gene_coverages.bam
+samtools coverage GG_3_gene_coverages.bam -o GG_3_gene_coverage.txt
+samtools sort -@ 20 GG_4_gene_coverages.sam -o GG_4_gene_coverages.bam
+samtools coverage GG_4_gene_coverages.bam -o GG_4_gene_coverage.txt
+samtools sort -@ 20 GG_5_gene_coverages.sam -o GG_5_gene_coverages.bam
+samtools coverage GG_5_gene_coverages.bam -o GG_5_gene_coverage.txt
+samtools sort -@ 20 GG_6_gene_coverages.sam -o GG_6_gene_coverages.bam
+samtools coverage GG_6_gene_coverages.bam -o GG_6_gene_coverage.txt
+samtools sort -@ 20 GG_7_gene_coverages.sam -o GG_7_gene_coverages.bam
+samtools coverage GG_7_gene_coverages.bam -o GG_7_gene_coverage.txt
+samtools sort -@ 20 GG_8_gene_coverages.sam -o GG_8_gene_coverages.bam
+samtools coverage GG_8_gene_coverages.bam -o GG_8_gene_coverage.txt
+samtools sort -@ 20 GG_9_gene_coverages.sam -o GG_9_gene_coverages.bam
+samtools coverage GG_9_gene_coverages.bam -o GG_9_gene_coverage.txt
+samtools sort -@ 20 GG_10_gene_coverages.sam -o GG_10_gene_coverages.bam
+samtools coverage GG_10_gene_coverages.bam -o GG_10_gene_coverage.txt
+
+#Oratia
+samtools sort -@ 20 Ora_10_gene_coverages.sam -o Ora_10_gene_coverages.bam
+samtools coverage Ora_10_gene_coverages.bam -o Ora_10_gene_coverage.txt
+samtools sort -@ 20 Ora_9_gene_coverages.sam -o Ora_9_gene_coverages.bam
+samtools coverage Ora_9_gene_coverages.bam -o Ora_9_gene_coverage.txt
+samtools sort -@ 20 Ora_8_gene_coverages.sam -o Ora_8_gene_coverages.bam
+samtools coverage Ora_8_gene_coverages.bam -o Ora_8_gene_coverage.txt
+samtools sort -@ 20 Ora_14_gene_coverages.sam -o Ora_14_gene_coverages.bam
+samtools coverage Ora_14_gene_coverages.bam -o Ora_14_gene_coverage.txt
+samtools sort -@ 20 Ora_13_gene_coverages.sam -o Ora_13_gene_coverages.bam
+samtools coverage Ora_13_gene_coverages.bam -o Ora_13_gene_coverage.txt
+samtools sort -@ 20 Ora_12_gene_coverages.sam -o Ora_12_gene_coverages.bam
+samtools coverage Ora_12_gene_coverages.bam -o Ora_12_gene_coverage.txt
+
+#Laingholm
+samtools sort -@ 20 La_2_gene_coverages.sam -o La_2_gene_coverages.bam
+samtools coverage La_2_gene_coverages.bam -o La_2_gene_coverage.txt
+samtools sort -@ 20 La_10_gene_coverages.sam -o La_10_gene_coverages.bam
+samtools coverage La_10_gene_coverages.bam -o La_10_gene_coverage.txt
+samtools sort -@ 20 La_11_gene_coverages.sam -o La_11_gene_coverages.bam
+samtools coverage La_11_gene_coverages.bam -o La_11_gene_coverage.txt
+samtools sort -@ 20 La_1_gene_coverages.sam -o La_1_gene_coverages.bam
+samtools coverage La_1_gene_coverages.bam -o La_1_gene_coverage.txt
+samtools sort -@ 20 La_13_gene_coverages.sam -o La_13_gene_coverages.bam
+samtools coverage La_13_gene_coverages.bam -o La_13_gene_coverage.txt
+samtools sort -@ 20 La_15_gene_coverages.sam -o La_15_gene_coverages.bam
+samtools coverage La_15_gene_coverages.bam -o La_15_gene_coverage.txt
+samtools sort -@ 20 La_3_gene_coverages.sam -o La_3_gene_coverages.bam
+samtools coverage La_3_gene_coverages.bam -o La_3_gene_coverage.txt
+samtools sort -@ 20 La_4_gene_coverages.sam -o La_4_gene_coverages.bam
+samtools coverage La_4_gene_coverages.bam -o La_4_gene_coverage.txt
+#samtools sort -@ 20 La_5_gene_coverages.sam -o La_5_gene_coverages.bam
+#samtools coverage La_5_gene_coverages.bam -o La_5_gene_coverage.txt
+samtools sort -@ 20 La_6_gene_coverages.sam -o La_6_gene_coverages.bam
+samtools coverage La_6_gene_coverages.bam -o La_6_gene_coverage.txt
+samtools sort -@ 20 La_8_gene_coverages.sam -o La_8_gene_coverages.bam
+samtools coverage La_8_gene_coverages.bam -o La_8_gene_coverage.txt
+samtools sort -@ 20 La_9_gene_coverages.sam -o La_9_gene_coverages.bam
+samtools coverage La_9_gene_coverages.bam -o La_9_gene_coverage.txt
+
+#Silverdale
+samtools sort -@ 20 SD_1_gene_coverages.sam -o SD_1_gene_coverages.bam
+samtools coverage SD_1_gene_coverages.bam -o SD_1_gene_coverage.txt
+samtools sort -@ 20 SD_11_gene_coverages.sam -o SD_11_gene_coverages.bam
+samtools coverage SD_11_gene_coverages.bam -o SD_11_gene_coverage.txt
+samtools sort -@ 20 SD_12_gene_coverages.sam -o SD_12_gene_coverages.bam
+samtools coverage SD_12_gene_coverages.bam -o SD_12_gene_coverage.txt
+samtools sort -@ 20 SD_13_gene_coverages.sam -o SD_13_gene_coverages.bam
+samtools coverage SD_13_gene_coverages.bam -o SD_13_gene_coverage.txt
+samtools sort -@ 20 SD_14_gene_coverages.sam -o SD_14_gene_coverages.bam
+samtools coverage SD_14_gene_coverages.bam -o SD_14_gene_coverage.txt
+samtools sort -@ 20 SD_15_gene_coverages.sam -o SD_15_gene_coverages.bam
+samtools coverage SD_15_gene_coverages.bam -o SD_15_gene_coverage.txt
+samtools sort -@ 20 SD_2_gene_coverages.sam -o SD_2_gene_coverages.bam
+samtools coverage SD_2_gene_coverages.bam -o SD_2_gene_coverage.txt
+samtools sort -@ 20 SD_3_gene_coverages.sam -o SD_3_gene_coverages.bam
+samtools coverage SD_3_gene_coverages.bam -o SD_3_gene_coverage.txt
+samtools sort -@ 20 SD_4_gene_coverages.sam -o SD_4_gene_coverages.bam
+samtools coverage SD_4_gene_coverages.bam -o SD_4_gene_coverage.txt
+samtools sort -@ 20 SD_5_gene_coverages.sam -o SD_5_gene_coverages.bam
+samtools coverage SD_5_gene_coverages.bam -o SD_5_gene_coverage.txt
+samtools sort -@ 20 SD_6_gene_coverages.sam -o SD_6_gene_coverages.bam
+samtools coverage SD_6_gene_coverages.bam -o SD_6_gene_coverage.txt
+samtools sort -@ 20 SD_9_gene_coverages.sam -o SD_9_gene_coverages.bam
+samtools coverage SD_9_gene_coverages.bam -o SD_9_gene_coverage.txt
+
+#Puketi
+samtools sort -@ 20 Puk10_gene_coverages.sam -o Puk10_gene_coverages.bam
+samtools coverage Puk10_gene_coverages.bam -o Puk10_gene_coverage.txt
+samtools sort -@ 20 Puk11_gene_coverages.sam -o Puk11_gene_coverages.bam
+samtools coverage Puk11_gene_coverages.bam -o Puk11_gene_coverage.txt
+samtools sort -@ 20 Puk12_gene_coverages.sam -o Puk12_gene_coverages.bam
+samtools coverage Puk12_gene_coverages.bam -o Puk12_gene_coverage.txt
+samtools sort -@ 20 Puk15_gene_coverages.sam -o Puk15_gene_coverages.bam
+samtools coverage Puk15_gene_coverages.bam -o Puk15_gene_coverage.txt
+samtools sort -@ 20 Puk19_gene_coverages.sam -o Puk19_gene_coverages.bam
+samtools coverage Puk19_gene_coverages.bam -o Puk19_gene_coverage.txt
+samtools sort -@ 20 Puk21_gene_coverages.sam -o Puk21_gene_coverages.bam
+samtools coverage Puk21_gene_coverages.bam -o Puk21_gene_coverage.txt
+samtools sort -@ 20 Puk22_gene_coverages.sam -o Puk22_gene_coverages.bam
+samtools coverage Puk22_gene_coverages.bam -o Puk22_gene_coverage.txt
+samtools sort -@ 20 Puk5_gene_coverages.sam -o Puk5_gene_coverages.bam
+samtools coverage Puk5_gene_coverages.bam -o Puk5_gene_coverage.txt
+samtools sort -@ 20 Puk6_gene_coverages.sam -o Puk6_gene_coverages.bam
+samtools coverage Puk6_gene_coverages.bam -o Puk6_gene_coverage.txt
+samtools sort -@ 20 Puk9_gene_coverages.sam -o Puk9_gene_coverages.bam
+samtools coverage Puk9_gene_coverages.bam -o Puk9_gene_coverage.txt

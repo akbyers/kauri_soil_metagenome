@@ -1,0 +1,67 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      kraken_filter
+#SBATCH --time          2-00:00:00
+#SBATCH --mem           4GB
+#SBATCH --cpus-per-task 2
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+#SBATCH --mail-user     alexa.byers@lincoln.ac.nz
+#SBATCH --mail-type     ALL
+
+## filter kraken outputs to include only bacterial DNA
+#Load modules
+module purge
+module load Python/2.7.18-gimkl-2020a
+
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/raw_data
+mkdir kraken_filtered
+
+##ORATIA
+python extract_kraken_reads.py -k k2_outputs/Ora_8.kraken -r k2_reports/Ora_8_report.kraken -s1 Ora_8_1.fastq -s2 Ora_8_2.fastq -o kraken_filtered/Ora_8_filt_1.fastq -o2 kraken_filtered/Ora_8_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Ora_9.kraken -r k2_reports/Ora_9_report.kraken -s1 Ora_9_1.fastq -s2 Ora_9_2.fastq -o kraken_filtered/Ora_9_filt_1.fastq -o2 kraken_filtered/Ora_9_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Ora_10.kraken -r k2_reports/Ora_10_report.kraken -s1 Ora_10_1.fastq -s2 Ora_10_2.fastq -o kraken_filtered/Ora_10_filt_1.fastq -o2 kraken_filtered/Ora_10_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Ora_12.kraken -r k2_reports/Ora_12_report.kraken -s1 Ora_12_1.fastq -s2 Ora_12_2.fastq -o kraken_filtered/Ora_12_filt_1.fastq -o2 kraken_filtered/Ora_12_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Ora_13.kraken -r k2_reports/Ora_13_report.kraken -s1 Ora_13_1.fastq -s2 Ora_13_2.fastq -o kraken_filtered/Ora_13_filt_1.fastq -o2 kraken_filtered/Ora_13_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Ora_14.kraken -r k2_reports/Ora_14_report.kraken -s1 Ora_14_1.fastq -s2 Ora_14_2.fastq -o kraken_filtered/Ora_14_filt_1.fastq -o2 kraken_filtered/Ora_14_filt_2.fastq --taxid 2 --include-children --fastq-output
+
+##LAINGHOLM
+python extract_kraken_reads.py -k k2_outputs/La_1.kraken -r k2_reports/La_1_report.kraken -s1 La_1_1.fastq -s2 La_1_2.fastq -o kraken_filtered/La_1_filt_1.fastq -o2 kraken_filtered/La_1_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_10.kraken -r k2_reports/La_10_report.kraken -s1 La_10_1.fastq -s2 La_10_2.fastq -o kraken_filtered/La_10_filt_1.fastq -o2 kraken_filtered/La_10_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_11.kraken -r k2_reports/La_11_report.kraken -s1 La_11_1.fastq -s2 La_11_2.fastq -o kraken_filtered/La_11_filt_1.fastq -o2 kraken_filtered/La_11_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_13.kraken -r k2_reports/La_13_report.kraken -s1 La_13_1.fastq -s2 La_13_2.fastq -o kraken_filtered/La_13_filt_1.fastq -o2 kraken_filtered/La_13_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_15.kraken -r k2_reports/La_15_report.kraken -s1 La_15_1.fastq -s2 La_15_2.fastq -o kraken_filtered/La_15_filt_1.fastq -o2 kraken_filtered/La_15_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_2.kraken -r k2_reports/La_2_report.kraken -s1 La_2_1.fastq -s2 La_2_2.fastq -o kraken_filtered/La_2_filt_1.fastq -o2 kraken_filtered/La_2_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_3.kraken -r k2_reports/La_3_report.kraken -s1 La_3_1.fastq -s2 La_3_2.fastq -o kraken_filtered/La_3_filt_1.fastq -o2 kraken_filtered/La_3_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_4.kraken -r k2_reports/La_4_report.kraken -s1 La_4_1.fastq -s2 La_4_2.fastq -o kraken_filtered/La_4_filt_1.fastq -o2 kraken_filtered/La_4_filt_2.fastq --taxid 2 --include-children --fastq-output
+#python extract_kraken_reads.py -k k2_outputs/La_5.kraken -r k2_reports/La_5_report.kraken -s1 La_5_1.fastq -s2 La_5_2.fastq -o kraken_filtered/La_5_filt_1.fastq -o2 kraken_filtered/La_5_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_6.kraken -r k2_reports/La_6_report.kraken -s1 La_6_1.fastq -s2 La_6_2.fastq -o kraken_filtered/La_6_filt_1.fastq -o2 kraken_filtered/La_6_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_8.kraken -r k2_reports/La_8_report.kraken -s1 La_8_1.fastq -s2 La_8_2.fastq -o kraken_filtered/La_8_filt_1.fastq -o2 kraken_filtered/La_8_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/La_9.kraken -r k2_reports/La_9_report.kraken -s1 La_9_1.fastq -s2 La_9_2.fastq -o kraken_filtered/La_9_filt_1.fastq -o2 kraken_filtered/La_9_filt_2.fastq --taxid 2 --include-children --fastq-output
+
+##PUKETI
+python extract_kraken_reads.py -k k2_outputs/Puk10.kraken -r k2_reports/Puk10_report.kraken -s1 Puk10_1.fastq -s2 Puk10_2.fastq -o kraken_filtered/Puk10_filt_1.fastq -o2 kraken_filtered/Puk10_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk11.kraken -r k2_reports/Puk11_report.kraken -s1 Puk11_1.fastq -s2 Puk11_2.fastq -o kraken_filtered/Puk11_filt_1.fastq -o2 kraken_filtered/Puk11_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk12.kraken -r k2_reports/Puk12_report.kraken -s1 Puk12_1.fastq -s2 Puk12_2.fastq -o kraken_filtered/Puk12_filt_1.fastq -o2 kraken_filtered/Puk12_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk15.kraken -r k2_reports/Puk15_report.kraken -s1 Puk15_1.fastq -s2 Puk15_2.fastq -o kraken_filtered/Puk15_filt_1.fastq -o2 kraken_filtered/Puk15_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk19.kraken -r k2_reports/Puk19_report.kraken -s1 Puk19_1.fastq -s2 Puk19_2.fastq -o kraken_filtered/Puk19_filt_1.fastq -o2 kraken_filtered/Puk19_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk21.kraken -r k2_reports/Puk21_report.kraken -s1 Puk21_1.fastq -s2 Puk21_2.fastq -o kraken_filtered/Puk21_filt_1.fastq -o2 kraken_filtered/Puk21_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk22.kraken -r k2_reports/Puk22_report.kraken -s1 Puk22_1.fastq -s2 Puk22_2.fastq -o kraken_filtered/Puk22_filt_1.fastq -o2 kraken_filtered/Puk22_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk5.kraken -r k2_reports/Puk5_report.kraken -s1 Puk5_1.fastq -s2 Puk5_2.fastq -o kraken_filtered/Puk5_filt_1.fastq -o2 kraken_filtered/Puk5_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk6.kraken -r k2_reports/Puk6_report.kraken -s1 Puk6_1.fastq -s2 Puk6_2.fastq -o kraken_filtered/Puk6_filt_1.fastq -o2 kraken_filtered/Puk6_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/Puk9.kraken -r k2_reports/Puk9_report.kraken -s1 Puk9_1.fastq -s2 Puk9_2.fastq -o kraken_filtered/Puk9_filt_1.fastq -o2 kraken_filtered/Puk9_filt_2.fastq --taxid 2 --include-children --fastq-output
+
+##SILVERDALE
+python extract_kraken_reads.py -k k2_outputs/SD_1.kraken -r k2_reports/SD_1_report.kraken -s1 SD_1_1.fastq -s2 SD_1_2.fastq -o kraken_filtered/SD_1_filt_1.fastq -o2 kraken_filtered/SD_1_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_11.kraken -r k2_reports/SD_11_report.kraken -s1 SD_11_1.fastq -s2 SD_11_2.fastq -o kraken_filtered/SD_11_filt_1.fastq -o2 kraken_filtered/SD_11_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_12.kraken -r k2_reports/SD_12_report.kraken -s1 SD_12_1.fastq -s2 SD_12_2.fastq -o kraken_filtered/SD_12_filt_1.fastq -o2 kraken_filtered/SD_12_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_13.kraken -r k2_reports/SD_13_report.kraken -s1 SD_13_1.fastq -s2 SD_13_2.fastq -o kraken_filtered/SD_13_filt_1.fastq -o2 kraken_filtered/SD_13_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_14.kraken -r k2_reports/SD_14_report.kraken -s1 SD_14_1.fastq -s2 SD_14_2.fastq -o kraken_filtered/SD_14_filt_1.fastq -o2 kraken_filtered/SD_14_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_15.kraken -r k2_reports/SD_15_report.kraken -s1 SD_15_1.fastq -s2 SD_15_2.fastq -o kraken_filtered/SD_15_filt_1.fastq -o2 kraken_filtered/SD_15_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_2.kraken -r k2_reports/SD_2_report.kraken -s1 SD_2_1.fastq -s2 SD_2_2.fastq -o kraken_filtered/SD_2_filt_1.fastq -o2 kraken_filtered/SD_2_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_3.kraken -r k2_reports/SD_3_report.kraken -s1 SD_3_1.fastq -s2 SD_3_2.fastq -o kraken_filtered/SD_3_filt_1.fastq -o2 kraken_filtered/SD_3_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_4.kraken -r k2_reports/SD_4_report.kraken -s1 SD_4_1.fastq -s2 SD_4_2.fastq -o kraken_filtered/SD_4_filt_1.fastq -o2 kraken_filtered/SD_4_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_5.kraken -r k2_reports/SD_5_report.kraken -s1 SD_5_1.fastq -s2 SD_5_2.fastq -o kraken_filtered/SD_5_filt_1.fastq -o2 kraken_filtered/SD_5_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_6.kraken -r k2_reports/SD_6_report.kraken -s1 SD_6_1.fastq -s2 SD_6_2.fastq -o kraken_filtered/SD_6_filt_1.fastq -o2 kraken_filtered/SD_6_filt_2.fastq --taxid 2 --include-children --fastq-output
+python extract_kraken_reads.py -k k2_outputs/SD_9.kraken -r k2_reports/SD_9_report.kraken -s1 SD_9_1.fastq -s2 SD_9_2.fastq -o kraken_filtered/SD_9_filt_1.fastq -o2 kraken_filtered/SD_9_filt_2.fastq --taxid 2 --include-children --fastq-output

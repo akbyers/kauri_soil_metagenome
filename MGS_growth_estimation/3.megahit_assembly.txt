@@ -1,0 +1,117 @@
+#!/bin/bash -e
+
+#SBATCH --account       lincoln03750
+#SBATCH --job-name      megahit_bacteria
+#SBATCH --time          4-00:00:00
+#SBATCH --mem           10GB
+#SBATCH --cpus-per-task 20
+#SBATCH --error         %x_%j.err
+#SBATCH --output        %x_%j.out
+#SBATCH --mail-user     alexa.byers@lincoln.ac.nz
+#SBATCH --mail-type     ALL
+
+#assembling metagenomic reads into contigs using megahit
+cd /scale_wlg_nobackup/filesets/nobackup/lincoln03750/MGS_RDF/
+#mkdir metagenome_assembly
+
+#load modules
+module purge
+module load MEGAHIT/1.2.9-gimkl-2022a-Python-3.10.5
+
+#Oratia
+#megahit -1 raw_data/kraken_filtered/Ora_10_filt_1.fastq -2 raw_data/kraken_filtered/Ora_10_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Ora_10
+#megahit -1 raw_data/kraken_filtered/Ora_12_filt_1.fastq -2 raw_data/kraken_filtered/Ora_12_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Ora_12
+#megahit -1 raw_data/kraken_filtered/Ora_13_filt_1.fastq -2 raw_data/kraken_filtered/Ora_13_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Ora_13
+#megahit -1 raw_data/kraken_filtered/Ora_14_filt_1.fastq -2 raw_data/kraken_filtered/Ora_14_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Ora_14
+#megahit -1 raw_data/kraken_filtered/Ora_8_filt_1.fastq -2 raw_data/kraken_filtered/Ora_8_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Ora_8
+#megahit -1 raw_data/kraken_filtered/Ora_9_filt_1.fastq -2 raw_data/kraken_filtered/Ora_9_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Ora_9
+
+#Laingholm
+#megahit -1 raw_data/kraken_filtered/La_1_filt_1.fastq -2 raw_data/kraken_filtered/La_1_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_1
+#megahit -1 raw_data/kraken_filtered/La_10_filt_1.fastq -2 raw_data/kraken_filtered/La_10_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_10
+#megahit -1 raw_data/kraken_filtered/La_11_filt_1.fastq -2 raw_data/kraken_filtered/La_11_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_11
+#megahit -1 raw_data/kraken_filtered/La_13_filt_1.fastq -2 raw_data/kraken_filtered/La_13_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_13
+#megahit -1 raw_data/kraken_filtered/La_15_filt_1.fastq -2 raw_data/kraken_filtered/La_15_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_15
+#megahit -1 raw_data/kraken_filtered/La_2_filt_1.fastq -2 raw_data/kraken_filtered/La_2_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_2
+#megahit -1 raw_data/kraken_filtered/La_3_filt_1.fastq -2 raw_data/kraken_filtered/La_3_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_3
+#megahit -1 raw_data/kraken_filtered/La_4_filt_1.fastq -2 raw_data/kraken_filtered/La_4_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_4
+#megahit -1 raw_data/kraken_filtered/La_5_filt_1.fastq -2 raw_data/kraken_filtered/La_5_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_5
+megahit -1 raw_data/kraken_filtered/La_6_filt_1.fastq -2 raw_data/kraken_filtered/La_6_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_6
+megahit -1 raw_data/kraken_filtered/La_8_filt_1.fastq -2 raw_data/kraken_filtered/La_8_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_8
+megahit -1 raw_data/kraken_filtered/La_9_filt_1.fastq -2 raw_data/kraken_filtered/La_9_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/La_9
+
+#Silverdale
+megahit -1 raw_data/kraken_filtered/SD_1_filt_1.fastq -2 raw_data/kraken_filtered/SD_1_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_1
+megahit -1 raw_data/kraken_filtered/SD_11_filt_1.fastq -2 raw_data/kraken_filtered/SD_11_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_11
+megahit -1 raw_data/kraken_filtered/SD_12_filt_1.fastq -2 raw_data/kraken_filtered/SD_12_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_12
+megahit -1 raw_data/kraken_filtered/SD_13_filt_1.fastq -2 raw_data/kraken_filtered/SD_13_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_13
+megahit -1 raw_data/kraken_filtered/SD_14_filt_1.fastq -2 raw_data/kraken_filtered/SD_14_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_14
+megahit -1 raw_data/kraken_filtered/SD_15_filt_1.fastq -2 raw_data/kraken_filtered/SD_15_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_15
+megahit -1 raw_data/kraken_filtered/SD_2_filt_1.fastq -2 raw_data/kraken_filtered/SD_2_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_2
+megahit -1 raw_data/kraken_filtered/SD_3_filt_1.fastq -2 raw_data/kraken_filtered/SD_3_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_3
+megahit -1 raw_data/kraken_filtered/SD_4_filt_1.fastq -2 raw_data/kraken_filtered/SD_4_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_4
+megahit -1 raw_data/kraken_filtered/SD_5_filt_1.fastq -2 raw_data/kraken_filtered/SD_5_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_5
+megahit -1 raw_data/kraken_filtered/SD_6_filt_1.fastq -2 raw_data/kraken_filtered/SD_6_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_6
+megahit -1 raw_data/kraken_filtered/SD_9_filt_1.fastq -2 raw_data/kraken_filtered/SD_9_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/SD_9
+
+#Puketi
+megahit -1 raw_data/kraken_filtered/Puk10_filt_1.fastq -2 raw_data/kraken_filtered/Puk10_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk10
+megahit -1 raw_data/kraken_filtered/Puk11_filt_1.fastq -2 raw_data/kraken_filtered/Puk10_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk11
+megahit -1 raw_data/kraken_filtered/Puk12_filt_1.fastq -2 raw_data/kraken_filtered/Puk12_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk12a
+megahit -1 raw_data/kraken_filtered/Puk15_filt_1.fastq -2 raw_data/kraken_filtered/Puk15_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk15
+megahit -1 raw_data/kraken_filtered/Puk19_filt_1.fastq -2 raw_data/kraken_filtered/Puk19_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk19
+megahit -1 raw_data/kraken_filtered/Puk21_filt_1.fastq -2 raw_data/kraken_filtered/Puk21_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk21
+megahit -1 raw_data/kraken_filtered/Puk22_filt_1.fastq -2 raw_data/kraken_filtered/Puk22_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk22
+megahit -1 raw_data/kraken_filtered/Puk5_filt_1.fastq -2 raw_data/kraken_filtered/Puk5_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk5
+megahit -1 raw_data/kraken_filtered/Puk6_filt_1.fastq -2 raw_data/kraken_filtered/Puk6_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk6
+megahit -1 raw_data/kraken_filtered/Puk9_filt_1.fastq -2 raw_data/kraken_filtered/Puk9_filt_2.fastq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/Puk9
+
+#Windy Hill
+megahit -1 raw_data_Aotea/kraken_filtered/WH_1_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_1_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_1
+megahit -1 raw_data_Aotea/kraken_filtered/WH_2_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_2_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_2
+megahit -1 raw_data_Aotea/kraken_filtered/WH_3_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_3_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_3
+megahit -1 raw_data_Aotea/kraken_filtered/WH_4_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_4_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_4
+megahit -1 raw_data_Aotea/kraken_filtered/WH_5_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_5_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_5
+megahit -1 raw_data_Aotea/kraken_filtered/WH_6_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_6_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_6
+megahit -1 raw_data_Aotea/kraken_filtered/WH_7_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_7_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_7
+megahit -1 raw_data_Aotea/kraken_filtered/WH_8_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_8_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_8
+megahit -1 raw_data_Aotea/kraken_filtered/WH_9_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_9_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_9
+megahit -1 raw_data_Aotea/kraken_filtered/WH_10_filt_1.fq -2 raw_data_Aotea/kraken_filtered/WH_10_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/WH_10
+
+#Glenfern
+megahit -1 raw_data_Aotea/kraken_filtered/GF_1_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_1_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_1
+megahit -1 raw_data_Aotea/kraken_filtered/GF_2_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_2_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_2
+megahit -1 raw_data_Aotea/kraken_filtered/GF_3_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_3_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_3
+megahit -1 raw_data_Aotea/kraken_filtered/GF_4_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_4_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_4
+megahit -1 raw_data_Aotea/kraken_filtered/GF_5_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_5_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_5
+megahit -1 raw_data_Aotea/kraken_filtered/GF_6_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_6_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_6
+megahit -1 raw_data_Aotea/kraken_filtered/GF_7_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_7_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_7
+megahit -1 raw_data_Aotea/kraken_filtered/GF_8_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_8_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_8
+megahit -1 raw_data_Aotea/kraken_filtered/GF_9_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_9_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_9
+megahit -1 raw_data_Aotea/kraken_filtered/GF_10_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GF_10_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GF_10
+
+#Gadgil
+megahit -1 raw_data_Aotea/kraken_filtered/GG_1_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_1_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_1
+megahit -1 raw_data_Aotea/kraken_filtered/GG_2_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_2_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_2
+megahit -1 raw_data_Aotea/kraken_filtered/GG_3_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_3_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_3
+megahit -1 raw_data_Aotea/kraken_filtered/GG_4_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_4_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_4
+megahit -1 raw_data_Aotea/kraken_filtered/GG_5_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_5_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_5
+megahit -1 raw_data_Aotea/kraken_filtered/GG_6_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_6_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_6
+megahit -1 raw_data_Aotea/kraken_filtered/GG_7_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_7_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_7
+megahit -1 raw_data_Aotea/kraken_filtered/GG_8_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_8_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_8
+megahit -1 raw_data_Aotea/kraken_filtered/GG_9_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_9_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_9
+megahit -1 raw_data_Aotea/kraken_filtered/GG_10_filt_1.fq -2 raw_data_Aotea/kraken_filtered/GG_10_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/GG_10
+
+#Hirakimata
+megahit -1 raw_data_Aotea/kraken_filtered/HM_1_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_1_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_1
+megahit -1 raw_data_Aotea/kraken_filtered/HM_2_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_2_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_2
+megahit -1 raw_data_Aotea/kraken_filtered/HM_3_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_3_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_3
+megahit -1 raw_data_Aotea/kraken_filtered/HM_4_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_4_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_4
+megahit -1 raw_data_Aotea/kraken_filtered/HM_5_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_5_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_5
+megahit -1 raw_data_Aotea/kraken_filtered/HM_6_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_6_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_6
+megahit -1 raw_data_Aotea/kraken_filtered/HM_7_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_7_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_7
+megahit -1 raw_data_Aotea/kraken_filtered/HM_8_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_8_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_8
+megahit -1 raw_data_Aotea/kraken_filtered/HM_9_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_9_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_9
+megahit -1 raw_data_Aotea/kraken_filtered/HM_10_filt_1.fq -2 raw_data_Aotea/kraken_filtered/HM_10_filt_2.fq -t 20 --k-list 21,29,39,59,79 --min-contig-len 400 -o CO_ASSEMBLY/MicrobeCensus/metagenome_assembly/HM_10
+
+

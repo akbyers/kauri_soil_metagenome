@@ -1,0 +1,409 @@
+---
+title: "METABOLIC_analysis"
+author: "Alexa Byers"
+date: "2025-01-13"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Basic alpha and beta diversity analysis of biogeochemical cycling genes
+## R Markdown
+```{r load libraries, message=FALSE, warning=FALSE}
+library(phyloseq)
+library(metagMisc)
+library(ggplot2)
+library(reshape2)
+library(Rmisc)
+library(lme4)
+library(multcomp)
+library(vegan)
+library(devtools)
+library(pairwiseAdonis)
+library(BiodiversityR)
+library(ggrepel)
+library(rlist)
+library(dplyr)
+library(scales)
+library(ggpubr)
+library(ggordiplots)
+library(RColorBrewer)
+```
+
+# Step 1 - Make phyloseq object for data processing, handling, and analysis
+```{r import data files}
+metabolic_gene_coverage <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/gene_coverage_METABOLIC_filtered.csv")
+metabolic_genes <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/METABOLIC_annotations - Copy.csv")
+metabolic_sample_dat <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/sample_metadata.csv")
+
+rownames(metabolic_gene_coverage) <- metabolic_gene_coverage$Contig_ID
+rownames(metabolic_genes) <- metabolic_genes$Contig_ID
+rownames(metabolic_sample_dat) <- metabolic_sample_dat$Sample_ID
+```
+```{r convert to ps format}
+metabolic_gene_coverage = otu_table(metabolic_gene_coverage[,-1], taxa_are_rows = TRUE)
+metabolic_genes = tax_table(as.matrix(metabolic_genes[,-1]))
+metabolic_sample_dat = sample_data(metabolic_sample_dat)
+METABOLIC_physeq = phyloseq(metabolic_gene_coverage, metabolic_genes, metabolic_sample_dat)
+```
+```{r merge contigs by gene}
+METABOLIC_ps_geneGlom <- tax_glom(METABOLIC_physeq, taxrank = "Gene_KO")
+saveRDS(METABOLIC_ps_geneGlom, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/METABOLIC_ps_geneGlom.rds")#export phyloseq files
+```
+# 1. Analysis of all biogeochemical cycling genes
+```{r calculate alpha diversity}
+METABOLIC_ps_geneGlom.r = transform_sample_counts(METABOLIC_ps_geneGlom, round) #round counts
+METABOLIC_geneGlom.alpha = estimate_richness(METABOLIC_ps_geneGlom.r)
+```
+```{r edit alpha diversity dataframe}
+sampleDat_all <- as.matrix(METABOLIC_ps_geneGlom.r@sam_data)
+sampleDat_all <- as.data.frame(sampleDat_all)#export to dataframe
+
+METABOLIC_all_alpha <- cbind(METABOLIC_geneGlom.alpha, sampleDat_all) #bind dataframes
+METABOLIC_all_alpha <- METABOLIC_all_alpha[c(1, 6, 11:17)]
+
+METABOLIC_all_alpha$Forest <- as.factor(METABOLIC_all_alpha$Forest)
+METABOLIC_all_alpha$DB_symptomatic <- as.factor(METABOLIC_all_alpha$DB_symptomatic)
+METABOLIC_all_alpha <- METABOLIC_all_alpha %>% mutate_if(is.character, as.numeric)
+
+write.csv(METABOLIC_all_alpha, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/METABOLIC_all_alpha.csv") #export results
+```
+```{r melt and summarise alpha diversity DF}
+METABOLIC_all_alpha.m <- melt(METABOLIC_all_alpha[,1:4])
+METABOLIC_all_alpha.se <- summarySE(METABOLIC_all_alpha.m, measurevar = "value", groupvars =c("Forest", "variable"))
+```
+```{r edit forest order to reflect disturbance gradient}
+levels(METABOLIC_all_alpha.se$Forest) <- c("Hirakimata", "Windy_Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi")
+mycolors = c(brewer.pal(name="Set1", n = 3), brewer.pal(name="Dark2", n = 8))
+```
+```{r plot alpha diversity}
+METABOLIC_all_plot <- ggplot(METABOLIC_all_alpha.se, aes(y=Forest, x=value, colour=Forest)) + 
+  geom_point(aes(), size=6)+
+  theme_bw(base_size = 15)+
+  xlab("")+
+  ylab("")+ 
+  theme(axis.text.x = element_text(face="bold"),
+  axis.text.y = element_text(face="bold"),
+  axis.title.x = element_text(face="bold"),
+  axis.title.y = element_text(face="bold"))+
+  geom_errorbar(aes(xmin=value-se, xmax=value+se), size=1, width=.2)+
+  facet_wrap(~variable, scales = "free_x", nrow = 2, ncol = 1)+
+  labs(title = "Alpha diversity of biogeochemical cycling genes")
+METABOLIC_all_plot <- METABOLIC_all_plot + theme(legend.position = "none")+ 
+  scale_color_manual(values = mycolors)
+```
+```{r kruskal wallis of alpha diversity, warning=FALSE}
+metabolic_shannon_KW <- kruskal.test(METABOLIC_all_alpha$Shannon, METABOLIC_all_alpha$Forest)
+metabolic_observed_KW <- kruskal.test(METABOLIC_all_alpha$Observed, METABOLIC_all_alpha$Forest)
+
+#multiple comparison tests
+pairwise.wilcox.test(METABOLIC_all_alpha$Shannon, METABOLIC_all_alpha$Forest, p.adjust.method = "holm")
+pairwise.wilcox.test(METABOLIC_all_alpha$Observed, METABOLIC_all_alpha$Forest, p.adjust.method = "holm")
+```
+```{r beta diversity analysis}
+metabolic_bray <- phyloseq::distance(METABOLIC_ps_geneGlom, "bray")#using non-rounded counts
+metabolic_NMDS <- metaMDS(as.matrix(metabolic_bray), distance = "bray")
+```
+```{r beta diversity PERMANOVA and pairwise adonis}
+adonis2(metabolic_bray ~ sampleDat_all$Forest) #permanova tests in vegan
+pairwise.adonis(metabolic_bray, sampleDat_all$Forest, sim.function = "vegdist", sim.method = "bray", p.adjust.m = "holm", perm = 999) #pairwise adonis tests
+```
+```{r plotting NMDS}
+#edit names, change order of forests
+sampleDat_all$Forest <- factor(sampleDat_all$Forest, levels = c("Hirakimata", "Windy_Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi"))
+levels(sampleDat_all$Forest) <- c("Hirakimata", "Windy Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi")
+```
+```{r}
+ordiplot_METABOLIC <- gg_ordiplot(metabolic_NMDS, sampleDat_all$Forest, scaling = 1, choices = c(1, 2), kind = c("sd"), conf = 0.95, show.groups = "all", ellipse = TRUE, label = FALSE, hull = FALSE, spiders = FALSE, plot = TRUE)
+ordiplot_METABOLIC2 <- ordiplot_METABOLIC$plot +  
+  guides(color=guide_legend("Forest"))+
+  geom_vline(xintercept = c(0), color = "black", linetype = 2) +
+  geom_hline(yintercept = c(0), color = "black", linetype = 2)+
+  theme_bw(base_size=12)+ 
+  scale_color_manual(values = mycolors)
+```
+##Analysing differences in abundances of genes (broad level categories)
+```{r convert to relative abundance}
+METABOLIC_ps_geneGlom.RA <- transform_sample_counts(METABOLIC_ps_geneGlom, function(x) x / sum(x) *100)
+METABOLIC_ps_geneGlom.df <- psmelt(METABOLIC_ps_geneGlom.RA)
+METABOLIC_ps_geneGlom.df2 <- METABOLIC_ps_geneGlom.df[c(1:3, 6, 12)]
+
+Category.sum <- METABOLIC_ps_geneGlom.df2 %>%
+  group_by(Forest, Category) %>%
+  summarize(mean_abund = mean(Abundance, na.rm=FALSE)) 
+
+colourCount = length(unique(phyGlom_NRPS.sum$Phylum))
+getPalette = colorRampPalette(brewer.pal(14, "Set1"))
+```
+```{r plot RA of biogeochemical cycling categories}
+Category_plot <- ggplot(Category.sum, aes(fill=reorder(Category, +mean_abund), y=mean_abund, x=Forest)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme_bw(base_size = 12)+ 
+  theme(axis.text.x = element_text(face="bold"),
+  axis.text.y = element_text(face="bold"),
+  axis.title.x = element_text(face="bold"),
+  axis.title.y = element_text(face="bold"))+
+  xlab("")+
+  ylab("Proportional abundance")+
+  geom_col(color = "black")+ 
+  guides(fill=guide_legend(title="Category", ncol = 2))#+
+  #scale_fill_manual(values = getPalette(colourCount))
+```
+
+###   2. Analysis of carbon degradation genes
+```{r subset C cycling genes}
+METABOLIC_C_genes = subset_taxa(METABOLIC_ps_geneGlom, Category=="Complex carbon degradation") #17 genes
+saveRDS(METABOLIC_C_genes, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/METABOLIC_C_ONLY.rds")
+```
+```{r C genes: calculate alpha diversity}
+METABOLIC_C_genes.r = transform_sample_counts(METABOLIC_C_genes, round) #round sample counts
+METABOLIC_C_alpha = estimate_richness(METABOLIC_C_genes.r)
+```
+```{r C genes: edit alpha diversity DF}
+sampleDat_C <- as.matrix(METABOLIC_C_genes.r@sam_data)
+sampleDat_C <- as.data.frame(sampleDat_C)#export to dataframe
+
+METABOLIC_C_alpha <- cbind(METABOLIC_C_alpha, sampleDat_C) #bind alpha-d and sample data
+METABOLIC_C_alpha <- METABOLIC_C_alpha[c(1, 6, 11:17)]
+
+METABOLIC_C_alpha$Forest <- as.factor(METABOLIC_C_alpha$Forest)
+METABOLIC_C_alpha$DB_symptomatic <- as.factor(METABOLIC_C_alpha$DB_symptomatic)
+METABOLIC_C_alpha <- METABOLIC_C_alpha %>% mutate_if(is.character, as.numeric)
+```
+```{r C genes: melt and summarise alpha diversity DF}
+METABOLIC_C_alpha.m <- melt(METABOLIC_C_alpha[,1:4])
+METABOLIC_C_alpha.se <- summarySE(METABOLIC_C_alpha.m, measurevar = "value", groupvars =c("Forest", "variable"))
+levels(METABOLIC_C_alpha.se$Forest) <- c("Hirakimata", "Windy_Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi")
+```
+```{r C genes: plot alpha diversity}
+METABOLIC_C_plot <- ggplot(METABOLIC_C_alpha.se, aes(y=Forest, x=value, colour=Forest)) + 
+  geom_point(aes(), size=6)+
+  theme_bw(base_size = 15)+
+  xlab("")+
+  ylab("")+ 
+  theme(axis.text.x = element_text(face="bold"),
+  axis.text.y = element_text(face="bold"),
+  axis.title.x = element_text(face="bold"),
+  axis.title.y = element_text(face="bold"))+
+  geom_errorbar(aes(xmin=value-se, xmax=value+se), size=1, width=.2)+
+  facet_wrap(~variable, scales = "free_x", nrow = 2, ncol = 1)+
+  labs(title = "Alpha diversity of carbon degradation genes")
+METABOLIC_C_plot <- METABOLIC_C_plot + theme(legend.position = "none")+ 
+  scale_color_manual(values = mycolors)
+```
+```{r C genes: kruskal wallis of alpha diversity, warning=FALSE}
+metabolic_C_shannon_KW <- kruskal.test(METABOLIC_C_alpha$Shannon, METABOLIC_C_alpha$Forest)
+metabolic_C_observed_KW <- kruskal.test(METABOLIC_C_alpha$Observed, METABOLIC_C_alpha$Forest)
+
+#multiple comparison tests
+pairwise.wilcox.test(METABOLIC_C_alpha$Shannon, METABOLIC_C_alpha$Forest, p.adjust.method = "holm")
+pairwise.wilcox.test(METABOLIC_C_alpha$Observed, METABOLIC_C_alpha$Forest, p.adjust.method = "holm")
+```
+```{r C genes: beta diversity analysis}
+metabolic_C_bray <- phyloseq::distance(METABOLIC_C_genes, "bray")#using non-rounded counts
+metabolic_C_NMDS <- metaMDS(as.matrix(metabolic_C_bray), distance = "bray")
+```
+```{r C genes: beta diversity PERMANOVA and pairwise adonis}
+adonis2(metabolic_C_bray ~ sampleDat_C$Forest) #permanova tests in vegan
+pairwise.adonis(metabolic_C_bray, sampleDat_C$Forest, sim.function = "vegdist", sim.method = "bray", p.adjust.m = "holm", perm = 999) #pairwise adonis tests
+```
+```{r plotting NMDS}
+#edit names, change order of forests
+sampleDat_C$Forest <- factor(sampleDat_C$Forest, levels = c("Hirakimata", "Windy_Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi"))
+levels(sampleDat_C$Forest) <- c("Hirakimata", "Windy Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi")
+```
+```{r}
+ordiplot_METABOLIC_C <- gg_ordiplot(metabolic_C_NMDS, sampleDat_C$Forest, scaling = 1, choices = c(1, 2), kind = c("sd"), conf = 0.95, show.groups = "all", ellipse = TRUE, label = FALSE, hull = FALSE, spiders = FALSE, plot = TRUE)
+ordiplot_METABOLIC_C2 <- ordiplot_METABOLIC_C$plot +  
+  guides(color=guide_legend("Forest"))+
+  geom_vline(xintercept = c(0), color = "black", linetype = 2) +
+  geom_hline(yintercept = c(0), color = "black", linetype = 2)+
+  theme_bw(base_size=12)+ 
+  scale_color_manual(values = mycolors)
+```
+##Analysing differences in abundances of C degradation genes
+```{r convert to relative abundance}
+METABOLIC_C_ps_geneGlom.RA <- transform_sample_counts(METABOLIC_C_genes, function(x) x / sum(x) *100)
+METABOLIC_C_ps_geneGlom.df <- psmelt(METABOLIC_C_ps_geneGlom.RA)
+METABOLIC_C_ps_geneGlom.df2 <- METABOLIC_C_ps_geneGlom.df[c(1:3, 6, 17)]
+
+C_genes.sum <- METABOLIC_C_ps_geneGlom.df2 %>%
+  group_by(Forest, Gene_KO) %>%
+  summarize(mean_abund = mean(Abundance, na.rm=FALSE)) 
+
+colourCount = length(unique(C_genes.sum$Gene_KO))
+mycolors2 = c(brewer.pal(name="Set1", n = 8), brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 8))
+```
+```{r plot RA of biogeochemical cycling categories}
+C_genes_plot <- ggplot(C_genes.sum, aes(fill=reorder(Gene_KO, +mean_abund), y=mean_abund, x=Forest)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme_bw(base_size = 12)+ 
+  theme(axis.text.x = element_text(face="bold"),
+  axis.text.y = element_text(face="bold"),
+  axis.title.x = element_text(face="bold"),
+  axis.title.y = element_text(face="bold"))+
+  xlab("")+
+  ylab("Proportional abundance")+
+  geom_col(color = "black")+ 
+  guides(fill=guide_legend(title="C degradation genes", ncol = 1))+ 
+  scale_color_manual(values = mycolors2)
+```
+#plotting functional groupings of genes
+```{r}
+METABOLIC_ps_functionGlom <- tax_glom(METABOLIC_C_genes, taxrank = "Function")
+METABOLIC_ps_functionGlom.RA <- transform_sample_counts(METABOLIC_ps_functionGlom, function(x) x / sum(x) *100)
+METABOLIC_C_ps_functionGlom.df <- psmelt(METABOLIC_ps_functionGlom.RA)
+METABOLIC_C_ps_functionGlom.df2 <- METABOLIC_C_ps_functionGlom.df[c(1:3, 6, 13)]
+
+C_function.sum <- METABOLIC_C_ps_functionGlom.df2 %>%
+  group_by(Forest, Function) %>%
+  summarize(mean_abund = mean(Abundance, na.rm=FALSE)) 
+
+colourCount = length(unique(C_function.sum$Function))
+mycolors2 = c(brewer.pal(name="Set1", n = 8), brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 8))
+```
+```{r plot RA of biogeochemical cycling categories}
+C_function_plot <- ggplot(C_function.sum, aes(fill=reorder(Function, +mean_abund), y=mean_abund, x=Forest)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme_bw(base_size = 12)+ 
+  theme(axis.text.x = element_text(face="bold"),
+  axis.text.y = element_text(face="bold"),
+  axis.title.x = element_text(face="bold"),
+  axis.title.y = element_text(face="bold"))+
+  xlab("")+
+  ylab("Relative abundance (%)")+
+  geom_col(color = "black")+ 
+  guides(fill=guide_legend(title="Functional C degradation genes", ncol = 1))+ 
+  scale_color_manual(values = mycolors2)
+```
+###   2. Analysis of N cycling genes
+```{r subset N cycling genes}
+METABOLIC_N_genes = subset_taxa(METABOLIC_ps_geneGlom, Category=="Nitrogen cycling") #10 genes
+saveRDS(METABOLIC_N_genes, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/phyloseq/METABOLIC_N_ONLY.rds")
+```
+```{r C genes: calculate alpha diversity}
+METABOLIC_N_genes.r = transform_sample_counts(METABOLIC_N_genes, round) #round sample counts
+METABOLIC_N_alpha = estimate_richness(METABOLIC_N_genes.r, measures=c("Observed", "Shannon"))
+```
+```{r C genes: edit alpha diversity DF}
+sampleDat_N <- as.matrix(METABOLIC_N_genes.r@sam_data)
+sampleDat_N <- as.data.frame(sampleDat_N)#export to dataframe
+
+METABOLIC_N_alpha <- cbind(METABOLIC_N_alpha, sampleDat_N) #bind alpha-d and sample data
+METABOLIC_N_alpha <- METABOLIC_N_alpha[c(1, 2, 4:10)]
+
+METABOLIC_N_alpha$Forest <- as.factor(METABOLIC_N_alpha$Forest)
+METABOLIC_N_alpha$DB_symptomatic <- as.factor(METABOLIC_N_alpha$DB_symptomatic)
+METABOLIC_N_alpha <- METABOLIC_N_alpha %>% mutate_if(is.character, as.numeric)
+```
+```{r C genes: melt and summarise alpha diversity DF}
+METABOLIC_N_alpha.m <- melt(METABOLIC_N_alpha[,1:4])
+METABOLIC_N_alpha.se <- summarySE(METABOLIC_N_alpha.m, measurevar = "value", groupvars =c("Forest", "variable"))
+levels(METABOLIC_N_alpha.se$Forest) <- c("Hirakimata", "Windy_Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi")
+```
+```{r C genes: plot alpha diversity}
+METABOLIC_N_plot <- ggplot(METABOLIC_N_alpha.se, aes(y=Forest, x=value, colour=Forest)) + 
+  geom_point(aes(), size=6)+
+  theme_bw(base_size = 15)+
+  xlab("")+
+  ylab("")+ 
+  theme(axis.text.x = element_text(face="bold"),
+  axis.text.y = element_text(face="bold"),
+  axis.title.x = element_text(face="bold"),
+  axis.title.y = element_text(face="bold"))+
+  geom_errorbar(aes(xmin=value-se, xmax=value+se), size=1, width=.2)+
+  facet_wrap(~variable, scales = "free_x", nrow = 2, ncol = 1)+
+  labs(title = "Alpha diversity of N cycling genes")
+METABOLIC_N_plot <- METABOLIC_N_plot + theme(legend.position = "none")+ 
+  scale_color_manual(values = mycolors)
+```
+```{r N genes: kruskal wallis of alpha diversity, warning=FALSE}
+metabolic_N_shannon_KW <- kruskal.test(METABOLIC_N_alpha$Shannon, METABOLIC_N_alpha$Forest)
+metabolic_N_observed_KW <- kruskal.test(METABOLIC_N_alpha$Observed, METABOLIC_N_alpha$Forest)
+
+#multiple comparison tests
+pairwise.wilcox.test(METABOLIC_N_alpha$Shannon, METABOLIC_N_alpha$Forest, p.adjust.method = "holm")
+pairwise.wilcox.test(METABOLIC_N_alpha$Observed, METABOLIC_N_alpha$Forest, p.adjust.method = "holm")
+```
+```{r C genes: beta diversity analysis}
+metabolic_N_bray <- phyloseq::distance(METABOLIC_N_genes, "bray")#using non-rounded counts
+metabolic_N_NMDS <- metaMDS(as.matrix(metabolic_N_bray), distance = "bray")
+```
+```{r C genes: beta diversity PERMANOVA and pairwise adonis}
+adonis2(metabolic_N_bray ~ sampleDat_N$Forest) #permanova tests in vegan
+pairwise.adonis(metabolic_N_bray, sampleDat_N$Forest, sim.function = "vegdist", sim.method = "bray", p.adjust.m = "holm", perm = 999) #pairwise adonis tests
+```
+```{r plotting NMDS}
+#edit names, change order of forests
+sampleDat_N$Forest <- factor(sampleDat_N$Forest, levels = c("Hirakimata", "Windy_Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi"))
+levels(sampleDat_N$Forest) <- c("Hirakimata", "Windy Hill", "Glenfern", "Gadgil", "Kaiaraara", "Oratia", "Silverdale", "Laingholm", "Puketi")
+```
+```{r}
+ordiplot_METABOLIC_N <- gg_ordiplot(metabolic_N_NMDS, sampleDat_N$Forest, scaling = 1, choices = c(1, 2), kind = c("sd"), conf = 0.95, show.groups = "all", ellipse = TRUE, label = FALSE, hull = FALSE, spiders = FALSE, plot = TRUE)
+ordiplot_METABOLIC_N2 <- ordiplot_METABOLIC_N$plot +  
+  guides(color=guide_legend("Forest"))+
+  geom_vline(xintercept = c(0), color = "black", linetype = 2) +
+  geom_hline(yintercept = c(0), color = "black", linetype = 2)+
+  theme_bw(base_size=12)+ 
+  scale_color_manual(values = mycolors)
+```
+##Analysing differences in abundances of C degradation genes
+```{r convert to relative abundance}
+METABOLIC_N_ps_geneGlom.RA <- transform_sample_counts(METABOLIC_N_genes, function(x) x / sum(x) *100)
+METABOLIC_N_ps_geneGlom.df <- psmelt(METABOLIC_N_ps_geneGlom.RA)
+METABOLIC_N_ps_geneGlom.df2 <- METABOLIC_N_ps_geneGlom.df[c(1:3, 6, 17)]
+
+N_genes.sum <- METABOLIC_N_ps_geneGlom.df2 %>%
+  group_by(Forest, Gene_KO) %>%
+  summarize(mean_abund = mean(Abundance, na.rm=FALSE)) 
+
+colourCount = length(unique(N_genes.sum$Gene_KO))
+mycolors2 = c(brewer.pal(name="Set1", n = 8), brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 8))
+```
+```{r plot RA of biogeochemical cycling categories}
+N_genes_plot <- ggplot(N_genes.sum, aes(fill=reorder(Gene_KO, +mean_abund), y=mean_abund, x=Forest)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme_bw(base_size = 12)+ 
+  theme(axis.text.x = element_text(face="bold"),
+  axis.text.y = element_text(face="bold"),
+  axis.title.x = element_text(face="bold"),
+  axis.title.y = element_text(face="bold"))+
+  xlab("")+
+  ylab("Proportional abundance")+
+  geom_col(color = "black")+ 
+  guides(fill=guide_legend(title="N cycling genes", ncol = 1))+ 
+  scale_color_manual(values = mycolors2)
+```
+#plotting functional groupings of N cycling genes
+```{r}
+METABOLIC_N_ps_functionGlom <- tax_glom(METABOLIC_N_genes, taxrank = "Function")
+METABOLIC_N_functionGlom.RA <- transform_sample_counts(METABOLIC_N_ps_functionGlom, function(x) x / sum(x) *100)
+METABOLIC_N_ps_functionGlom.df <- psmelt(METABOLIC_N_functionGlom.RA)
+METABOLIC_N_ps_functionGlom.df2 <- METABOLIC_N_ps_functionGlom.df[c(1:3, 6, 13)]
+
+N_function.sum <- METABOLIC_N_ps_functionGlom.df2 %>%
+  group_by(Forest, Function) %>%
+  summarize(mean_abund = mean(Abundance, na.rm=FALSE)) 
+
+colourCount = length(unique(N_function.sum$Function))
+mycolors2 = c(brewer.pal(name="Set1", n = 8), brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 8))
+```
+```{r plot RA of biogeochemical cycling categories}
+N_function_plot <- ggplot(N_function.sum, aes(fill=reorder(Function, +mean_abund), y=mean_abund, x=Forest)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme_bw(base_size = 12)+ 
+  theme(axis.text.x = element_text(face="bold"),
+  axis.text.y = element_text(face="bold"),
+  axis.title.x = element_text(face="bold"),
+  axis.title.y = element_text(face="bold"))+
+  xlab("")+
+  ylab("Relative abundance (%)")+
+  geom_col(color = "black")+ 
+  guides(fill=guide_legend(title="Functional N cycling genes", ncol = 1))+ 
+  scale_color_manual(values = mycolors2)
+```
+
+
+

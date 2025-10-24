@@ -1,0 +1,487 @@
+---
+title: "microbial growth rate"
+author: "Alexa Byers"
+date: "2024-11-06"
+output: html_document
+---
+
+##https://github.com/jlw-ecoevo/gRodon2?tab=readme-ov-file
+##Using gRodon to predict the maximal growth rate of a prokaryotic organism from metagenomic data
+##uses gene coverage data to apply  a correction factor for the relative abundance of different organisms
+
+#gRodon returns a list with the following elements:
+
+#1. CUBHE - Median codon usage bias of the highly expressed genes (MILC) calculated using the genome-wide codon usage as the expected bias
+#2. ConsistencyHE - Mean codon usage bias of the highly expressed genes (MILC) calculated using the codon usage of highly expressed genes as the expected bias
+#3. CPB - Genome-wide codon pair bias (Coleman et al. 2008)
+#4. FilteredSequences - Number of gene sequences filtered out during calulation (due to length and/or presence of ambiguous bases)
+#5. d - Predicted doubling time in hours
+#6. LowerCI - Lower CI of d (2.5%) from linear model
+#7. UpperCI -Upper CI of d (97.5%) from linear model
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r load libraries}
+devtools::install_github("jlw-ecoevo/gRodon2")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("Biostrings", force = TRUE)
+BiocManager::install("coRdon")
+install.packages("matrixStats")
+
+library(gRodon)
+library(Biostrings)
+```
+```{r set paths to files}
+path_prodigal <- "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/prodigal_files"
+path_blast <- "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/blast_files"
+read_depths <- "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/coverage_files"
+```
+##ORATIA
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="Ora_", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins, results='hide'}
+blast_names <- sort(list.files(path_blast, pattern="Ora_", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_protiens.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="Ora_", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+Ora_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(Ora_growthRate) <- sample.names3
+capture.output(Ora_growthRate, file="C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Oratia.txt")
+```
+```{r}
+Oratia_model <- data.frame(d = sapply(Ora_growthRate, function(x) x$d), LowerCI = sapply(Ora_growthRate, function(x) x$LowerCI), UpperCI = sapply(Ora_growthRate, function(x) x$UpperCI))
+write.csv(Oratia_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Oratia.csv")
+```
+
+#LAINGHOLM
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="La_", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins, results='hide'}
+blast_names <- sort(list.files(path_blast, pattern="La_", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_protiens.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="La_", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+LA_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(LA_growthRate) <- sample.names3
+capture.output(LA_growthRate, file="C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Laingholm.txt")
+```
+```{r}
+La_model <- data.frame(d = sapply(LA_growthRate, function(x) x$d), LowerCI = sapply(LA_growthRate, function(x) x$LowerCI), UpperCI = sapply(LA_growthRate, function(x) x$UpperCI))
+write.csv(La_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Laingholm.csv")
+```
+#SILVERDALE
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="SD_", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins}
+blast_names <- sort(list.files(path_blast, pattern="SD_", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_protiens.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="SD_", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+SD_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(SD_growthRate) <- sample.names3
+capture.output(SD_growthRate, file="C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Silverdale.txt")
+```
+```{r}
+SD_model <- data.frame(d = sapply(SD_growthRate, function(x) x$d), LowerCI = sapply(SD_growthRate, function(x) x$LowerCI), UpperCI = sapply(SD_growthRate, function(x) x$UpperCI))
+write.csv(SD_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Silverdale.csv")
+```
+#PUKETI
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="Puk", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins}
+blast_names <- sort(list.files(path_blast, pattern="Puk", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_protiens.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="Puk", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+Puk_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(Puk_growthRate) <- sample.names3
+capture.output(Puk_growthRate, file="C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Puk.txt")
+```
+```{r}
+Puk_10_GR <- predictGrowth(prodigal_files$Puk_10, highly_expressed$Puk_10, depth_of_coverage = depth_of_coverage$Puk_10, mode = "metagenome_v2", bg = "all")
+Puk_11_GR <- predictGrowth(prodigal_files$Puk_11, highly_expressed$Puk_11, depth_of_coverage = depth_of_coverage$Puk_11, mode = "metagenome_v2", bg = "all")
+Puk_12_GR <- predictGrowth(prodigal_files$Puk_12, highly_expressed$Puk_12, depth_of_coverage = depth_of_coverage$Puk_12, mode = "metagenome_v2", bg = "all")
+Puk_15_GR <- predictGrowth(prodigal_files$Puk_15, highly_expressed$Puk_15, depth_of_coverage = depth_of_coverage$Puk_15, mode = "metagenome_v2", bg = "all")
+Puk_19_GR <- predictGrowth(prodigal_files$Puk_19, highly_expressed$Puk_19, depth_of_coverage = depth_of_coverage$Puk_19, mode = "metagenome_v2", bg = "all")
+Puk_21_GR <- predictGrowth(prodigal_files$Puk_21, highly_expressed$Puk_21, depth_of_coverage = depth_of_coverage$Puk_21, mode = "metagenome_v2", bg = "all")
+Puk_22_GR <- predictGrowth(prodigal_files$Puk_22, highly_expressed$Puk_22, depth_of_coverage = depth_of_coverage$Puk_22, mode = "metagenome_v2", bg = "all")
+Puk_5_GR <- predictGrowth(prodigal_files$Puk_5, highly_expressed$Puk_5, depth_of_coverage = depth_of_coverage$Puk_5, mode = "metagenome_v2", bg = "all")
+Puk_6_GR <- predictGrowth(prodigal_files$Puk_6, highly_expressed$Puk_6, depth_of_coverage = depth_of_coverage$Puk_6, mode = "metagenome_v2", bg = "all") ##not working
+Puk_9_GR <- predictGrowth(prodigal_files$Puk_9, highly_expressed$Puk_9, depth_of_coverage = depth_of_coverage$Puk_9, mode = "metagenome_v2", bg = "all") #not working
+
+Puk_growthRate <- list(Puk_10_GR, Puk_11_GR, Puk_12_GR, Puk_15_GR, Puk_19_GR, Puk_21_GR, Puk_22_GR, Puk_5_GR)
+capture.output(Puk_growthRate, file="C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Puk.txt")
+```
+```{r}
+Puk_model <- data.frame(d = sapply(Puk_growthRate, function(x) x$d), LowerCI = sapply(Puk_growthRate, function(x) x$LowerCI), UpperCI = sapply(Puk_growthRate, function(x) x$UpperCI))
+write.csv(Puk_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_Puketi.csv")
+```
+##Windy Hill
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="WH_", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins, results='hide'}
+blast_names <- sort(list.files(path_blast, pattern="WH_", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_proteins.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="WH_", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+WH_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(WH_growthRate) <- sample.names3
+```
+```{r}
+WH_model <- data.frame(d = sapply(WH_growthRate, function(x) x$d), LowerCI = sapply(WH_growthRate, function(x) x$LowerCI), UpperCI = sapply(WH_growthRate, function(x) x$UpperCI))
+write.csv(WH_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_WH.csv")
+```
+
+#Glenfern
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="GF_", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins, results='hide'}
+blast_names <- sort(list.files(path_blast, pattern="GF_", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_proteins.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="GF_", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+GF_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(GF_growthRate) <- sample.names3
+```
+```{r}
+GF_model <- data.frame(d = sapply(GF_growthRate, function(x) x$d), LowerCI = sapply(GF_growthRate, function(x) x$LowerCI), UpperCI = sapply(GF_growthRate, function(x) x$UpperCI))
+write.csv(GF_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_GF.csv")
+```
+#Gadgil
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="GG_", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins}
+blast_names <- sort(list.files(path_blast, pattern="GG_", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_proteins.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="GG_", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+GG_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(GG_growthRate) <- sample.names3
+```
+```{r}
+GG_model <- data.frame(d = sapply(GG_growthRate, function(x) x$d), LowerCI = sapply(GG_growthRate, function(x) x$LowerCI), UpperCI = sapply(GG_growthRate, function(x) x$UpperCI))
+write.csv(GG_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_GG.csv")
+```
+#Hirakimata
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="HM_", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins}
+blast_names <- sort(list.files(path_blast, pattern="HM_", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_proteins.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="HM_", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+HM_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(HM_growthRate) <- sample.names3
+```
+```{r}
+HM_model <- data.frame(d = sapply(HM_growthRate, function(x) x$d), LowerCI = sapply(HM_growthRate, function(x) x$LowerCI), UpperCI = sapply(HM_growthRate, function(x) x$UpperCI))
+write.csv(HM_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_HM.csv")
+```
+#Kaiaraara
+```{r read in prodigal genes}
+prodigal_names <- sort(list.files(path_prodigal, pattern="KA_", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(prodigal_names), "_prodigal_genes.fna"), `[`, 1) # Extract sample names
+
+#import files
+prodigal_files <- lapply(prodigal_names, function(x) readDNAStringSet(x))
+gene_IDs <- lapply(prodigal_files, function(x) gsub(" .*","",names(x)))
+names(prodigal_files) <- sample.names
+names(gene_IDs) <- sample.names
+```
+```{r Search for genes annotated as ribosomal proteins}
+blast_names <- sort(list.files(path_blast, pattern="KA_", full.names = TRUE))
+sample.names2 <- sapply(strsplit(basename(blast_names), "_ribosomal_proteins.blast"), `[`, 1) # Extract sample names
+
+#read in blast files
+blast_files <- lapply(blast_names, function(x) read.table(x, sep = '\t', header = FALSE))
+names(blast_files) <- sample.names2
+lapply(blast_files, function(x) unique(x$V1))
+
+highly_expressed <- lapply(seq_along(gene_IDs), function(i) gene_IDs[[i]] %in% blast_files[[i]]$V1)
+names(highly_expressed) <- sample.names
+```
+```{r read in coverage depths}
+depth_names <- sort(list.files(read_depths, pattern="KA_", full.names = TRUE))
+sample.names3 <- sapply(strsplit(basename(depth_names), "_gene_coverage.txt"), `[`, 1) # Extract sample names
+
+#read in coverage files
+depth_files <- lapply(depth_names, function(x) read.delim(x, stringsAsFactors = FALSE))
+names(depth_files) <- sample.names3
+depths <- lapply(depth_files, function(x) x$meandepth)
+```
+```{r make sure in correct order}
+for (i in seq_along(depths)) {
+names(depths[[i]]) <- depth_files[[i]]$X.rname  
+}
+depth_of_coverage <- lapply(seq_along(depths), function(i) depths[[i]][gsub(" .*", "", names(prodigal_files[[i]]))])
+names(depth_of_coverage) <- sample.names3
+```
+```{r calculate growth rate using gRodon}
+KA_growthRate <- lapply(seq_along(prodigal_files), function(i) predictGrowth(prodigal_files[[i]], highly_expressed[[i]], depth_of_coverage = depth_of_coverage[[i]], mode = "metagenome_v2", bg = "all"))
+names(KA_growthRate) <- sample.names3
+```
+```{r}
+KA_model <- data.frame(d = sapply(KA_growthRate, function(x) x$d), LowerCI = sapply(KA_growthRate, function(x) x$LowerCI), UpperCI = sapply(KA_growthRate, function(x) x$UpperCI))
+write.csv(KA_model, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Growth potential/gRodon_KA.csv")
+```
+
+
+

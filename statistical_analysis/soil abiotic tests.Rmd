@@ -1,0 +1,44 @@
+---
+title: "Soil abiotic analysis"
+output: html_document
+date: "2024-08-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+##SUMMARISING DIFFERENCES IN SOIL ABIOTIC PROPERTIES BETWEEN KAURI FORESTS
+```{r load libraries}
+library(vegan)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+library(lme4)
+library(lmtest)
+library(Hmisc)
+library(corrplot)
+library(RColorBrewer)
+```
+```{r read in data}
+soil_abiotic_properties <- read.csv("C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Soil abiotic data/HILLS_DATA.csv")
+soil_abiotic_properties$Forest <- as.factor(soil_abiotic_properties$Forest)
+```
+```{r remove unwanted data for Olsen P}
+#soil_abiotic_properties <- subset(soil_abiotic_properties, Remove_for_OlsenP == "No") #GF and WH Olsen P values were in different units, so we removed WH and GF data to get Olsen P data summarises for these sites
+```
+
+##SUMMARISE DATA
+```{r}
+#melt dataframe
+soil_abiotic_summary <- melt(soil_abiotic_properties)
+
+#summarise by forest
+soil_abiotic_sum <- soil_abiotic_summary %>%
+  group_by(Forest, variable) %>%
+  summarise(mean = mean(value, na.rm=TRUE), sd = sd(value, na.rm=TRUE), n_samples = n())
+write.csv(soil_abiotic_sum, "C:/Users/byersa/OneDrive - Lincoln University/Documents/Rutherford/Metagenomics/Soil abiotic data/soil_abiotic_summary_Forest.csv")
+```
+
+
